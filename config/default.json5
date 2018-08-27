@@ -1,0 +1,13 @@
+{
+  reddit: {
+    channel: '',
+    userAgent: ''
+    clientId: ''
+    clientSecret: '',
+    refreshToken '',
+    subreddits: [],
+  },
+  discord: {
+    token: '',
+  }
+}
