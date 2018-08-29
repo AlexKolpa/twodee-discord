@@ -9,7 +9,7 @@ const defaultBotColor = 12886584;
 // Ensure a min of 60s between post creation and posting to Discord
 const minPostTimeSec = 60;
 
-export default async (discord) => {
+export default async function reddit(discord) {
 	log.info('setting up reddit plugin');
 
 	const channelName = config.get('reddit.channel');
@@ -105,5 +105,5 @@ export default async (discord) => {
 	return () => {
 		clearInterval(pollInterval);
 		clearInterval(drainInterval);
-	}
-};
+	};
+}

@@ -23,5 +23,6 @@ module.exports = {
 			}
 		}],
 		"max-len": ["error", {"code": 120, "tabWidth": 2, "ignoreUrls": true}],
+		"prefer-destructuring" : ["off"],
 	}
 };
