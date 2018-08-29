@@ -63,12 +63,14 @@ export default async function news(discord) {
 
 	log.info('setting up polling');
 
-	const interval = setTimeout(async () => {
+	const interval = setInterval(async () => {
 		log.info('polling');
 		const feed = await parser.parseURL(channel);
 		const posts = [];
 
 		const newItems = feed.items.filter(isNewerThan(latestPost));
+
+		log.info(`Found ${newItems.length} new news posts`);
 
 		// Intentionally do each parse sequentially, as we're otherwise effectively DDoSing the channel
 		// eslint-disable-next-line no-restricted-syntax
@@ -78,10 +80,7 @@ export default async function news(discord) {
 			posts.push(post);
 		}
 
-		if (posts.length > 0) {
-			log.info(`Found ${posts.length} new new posts`);
-			posts.forEach(submit(discordChannel));
-		}
+		posts.forEach(submit(discordChannel));
 
 		latestPost = newItems.reduce((timestamp, item) => {
 			const newTimestamp = new Date(item.pubDate).getTime();
