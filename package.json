@@ -13,6 +13,8 @@
   "dependencies": {
     "config": "^2.0.1",
     "discord.js": "^11.4.2",
+    "open-graph": "^0.2.3",
+    "rss-parser": "^3.4.3",
     "snoowrap": "^1.15.2"
   },
   "devDependencies": {

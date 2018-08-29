@@ -5,9 +5,13 @@
     clientId: ''
     clientSecret: '',
     refreshToken '',
-    subreddits: [],
+    subreddits: [''],
   },
   discord: {
     token: '',
+  },
+  news: {
+    channel: '',
+    url: '',
   }
 }

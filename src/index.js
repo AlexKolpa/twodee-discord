@@ -1,6 +1,7 @@
 import Discord from 'discord.js';
 import config from 'config';
 import reddit from './plugins/reddit';
+import news from './plugins/news';
 import logger from './logger';
 
 const log = logger('bot:main');
@@ -11,18 +12,29 @@ async function init() {
 	await client.login(config.get('discord.token'));
 
 	log.info('starting plugins');
-	const stop = await reddit(client);
+	const stops = await Promise.all([
+		reddit(client),
+		news(client),
+	]);
 
 	const signals = {
-		'SIGHUP' : 1,
-		'SIGINT' : 2,
-		'SIGTERM' : 15
+		SIGHUP: 1,
+		SIGINT: 2,
+		SIGTERM: 15,
 	};
 
 	Object.keys(signals).forEach((signal) => {
 		process.on(signal, () => {
 			log.info('shutting down');
-			stop();
+			stops.forEach((stop) => {
+				try {
+					if (stop) {
+						stop();
+					}
+				} catch (e) {
+					log.error(`error stopping plugin: ${e}`);
+				}
+			});
 			process.exit(128 + signals[signal]);
 		});
 	});
