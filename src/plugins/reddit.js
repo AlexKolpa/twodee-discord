@@ -9,6 +9,9 @@ const defaultBotColor = 12886584;
 // Ensure a min of 60s between post creation and posting to Discord
 const minPostTimeSec = 60;
 
+const messageTitleMaxLength = 256;
+const messageDescMaxLength = 2048;
+
 export default async function reddit(discord) {
 	log.info('setting up reddit plugin');
 
@@ -90,11 +93,15 @@ export default async function reddit(discord) {
 
 			newPosts.forEach((submission) => {
 				const message = new RichEmbed();
-				message.title = `[${submission.subreddit.display_name}] [${submission.author.name}] ${submission.title}`;
-				message.image = { url: submission.url };
+				message.title = `[${submission.subreddit.display_name}] [${submission.author.name}] ${submission.title}`.substring(0, messageTitleMaxLength);
 				message.url = `https://reddit.com${submission.permalink}`;
 				message.color = subredditColors[submission.subreddit.display_name.toLowerCase()] || defaultBotColor;
-
+				if (submission.is_self) {
+					message.description = submission.selftext.substring(0, messageDescMaxLength);
+				}
+				else {
+					message.image = { url: submission.url };
+				}
 				redditChannel.send(message);
 			});
 		} catch (e) {
