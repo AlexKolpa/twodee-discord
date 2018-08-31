@@ -93,11 +93,11 @@ export default async function reddit(discord) {
 
 			newPosts.forEach((submission) => {
 				const message = new RichEmbed();
-				message.title = `[${submission.subreddit.display_name}] [${submission.author.name}] ${submission.title}`.substring(0, messageTitleMaxLength);
+				message.title = limitLength(`[${submission.subreddit.display_name}] [${submission.author.name}] ${submission.title}`, messageTitleMaxLength);
 				message.url = `https://reddit.com${submission.permalink}`;
 				message.color = subredditColors[submission.subreddit.display_name.toLowerCase()] || defaultBotColor;
 				if (submission.is_self) {
-					message.description = submission.selftext.substring(0, messageDescMaxLength);
+					message.description = limitLength(submission.selftext, messageDescMaxLength);
 				}
 				else {
 					message.image = { url: submission.url };
@@ -113,4 +113,11 @@ export default async function reddit(discord) {
 		clearInterval(pollInterval);
 		clearInterval(drainInterval);
 	};
+}
+
+function limitLength(text, maxLength) {
+	if (text.length > maxLength) {
+		text = text.substring(0, maxLength - 3) + '...';
+	}
+	return text;
 }
