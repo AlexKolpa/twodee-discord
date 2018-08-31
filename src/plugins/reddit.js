@@ -12,6 +12,10 @@ const minPostTimeSec = 60;
 const messageTitleMaxLength = 256;
 const messageDescMaxLength = 2048;
 
+function limitLength(text, maxLength) {
+	return text.length > maxLength ? `${text.substring(0, maxLength - 3)}...` : text;
+}
+
 export default async function reddit(discord) {
 	log.info('setting up reddit plugin');
 
@@ -93,13 +97,13 @@ export default async function reddit(discord) {
 
 			newPosts.forEach((submission) => {
 				const message = new RichEmbed();
-				message.title = limitLength(`[${submission.subreddit.display_name}] [${submission.author.name}] ${submission.title}`, messageTitleMaxLength);
+				const title = `[${submission.subreddit.display_name}] [${submission.author.name}] ${submission.title}`;
+				message.title = limitLength(title, messageTitleMaxLength);
 				message.url = `https://reddit.com${submission.permalink}`;
 				message.color = subredditColors[submission.subreddit.display_name.toLowerCase()] || defaultBotColor;
 				if (submission.is_self) {
 					message.description = limitLength(submission.selftext, messageDescMaxLength);
-				}
-				else {
+				} else {
 					message.image = { url: submission.url };
 				}
 				redditChannel.send(message);
@@ -113,11 +117,4 @@ export default async function reddit(discord) {
 		clearInterval(pollInterval);
 		clearInterval(drainInterval);
 	};
-}
-
-function limitLength(text, maxLength) {
-	if (text.length > maxLength) {
-		text = text.substring(0, maxLength - 3) + '...';
-	}
-	return text;
 }
