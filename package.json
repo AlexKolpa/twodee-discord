@@ -6,7 +6,7 @@
   "author": "Alex Kolpa <akolpa1990@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "test": "yarn lint",
+    "test": "yarn lint && yarn build",
     "lint": "eslint src",
     "lint:dev": "eslint src --fix",
     "build": "babel src --out-dir out"
