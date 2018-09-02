@@ -3,6 +3,7 @@ import config from 'config';
 import reddit from './plugins/reddit';
 import news from './plugins/news';
 import logger from './logger';
+import countdown from './plugins/countdown';
 
 const log = logger('bot:main');
 
@@ -15,6 +16,7 @@ async function init() {
 	const stops = await Promise.all([
 		reddit(client),
 		news(client),
+		countdown(client),
 	]);
 
 	const signals = {
