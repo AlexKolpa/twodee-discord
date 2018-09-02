@@ -1,6 +1,8 @@
 import logger from '../logger';
 
 const defaultCount = 10;
+const maxCount = 10;
+
 const log = logger('plugins:countdown');
 
 export default async function countdown(discord) {
@@ -13,6 +15,10 @@ export default async function countdown(discord) {
 			let count = defaultCount;
 			if (parts.length > 1) {
 				count = Number(parts[1]) || defaultCount;
+
+				if (count > maxCount) {
+					count = defaultCount;
+				}
 			}
 
 			let currentCount = 0;
