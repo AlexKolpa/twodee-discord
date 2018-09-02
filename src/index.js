@@ -4,6 +4,7 @@ import reddit from './plugins/reddit';
 import news from './plugins/news';
 import logger from './logger';
 import countdown from './plugins/countdown';
+import choose from './plugins/choose';
 
 const log = logger('bot:main');
 
@@ -17,6 +18,7 @@ async function init() {
 		reddit(client),
 		news(client),
 		countdown(client),
+		choose(client),
 	]);
 
 	const signals = {
