@@ -1,6 +1,9 @@
 import fs from 'fs';
 import config from 'config';
 import { promisify } from 'util';
+import logger from '../../logger';
+
+const log = logger('plugins:emotes:db');
 
 const readFile = promisify(fs.readFile);
 const writeFile = promisify(fs.writeFile);
@@ -31,6 +34,7 @@ const emotes = new Promise(async (resolve) => {
 		// Freeze objects to prevent changes being made outside this module
 		emotesContent.list.forEach(emote => Object.freeze(emote));
 	} catch (e) {
+		log.warn(`unable to parse emotes file ${e}`);
 		emotesContent = { sequence: 0, list: [] };
 	}
 
