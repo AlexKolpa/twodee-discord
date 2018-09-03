@@ -1,17 +1,22 @@
 {
   reddit: {
     channel: '',
-    userAgent: ''
-    clientId: ''
+    userAgent: '',
+    clientId: '',
     clientSecret: '',
-    refreshToken '',
-    subreddits: [''],
+    refreshToken: '',
+    subreddits: ['awwnime','pantsu','sukebei','kanmusu','zettairyouiki','gunime','awwcoholics','headpats','moescape','hatsune','kemonomimi','patchuu','chinadress'],
   },
   discord: {
     token: '',
   },
   news: {
-    channel: '',
-    url: '',
-  }
+    channel: 'news',
+    url: 'https://www.animenewsnetwork.com/newsroom/rss.xml',
+  },
+  emotes: {
+    file: './emotes.json',
+    // 'Mod' role
+    editRoles: ['473766183447822336'],
+  },
 }
