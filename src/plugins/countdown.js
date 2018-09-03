@@ -8,7 +8,7 @@ const log = logger('plugins:countdown');
 export default async function countdown(discord) {
 	log.info('starting countdown plugin');
 	discord.on('message', (msg) => {
-		if (msg.content.startsWith('.cd')) {
+		if (msg.content.startsWith('!cd')) {
 			const channel = msg.channel;
 
 			const parts = msg.content.split(' ');
@@ -16,7 +16,7 @@ export default async function countdown(discord) {
 			if (parts.length > 1) {
 				count = Number(parts[1]) || defaultCount;
 
-				if (count > maxCount) {
+				if (count > maxCount || count <= 0) {
 					count = defaultCount;
 				}
 			}
