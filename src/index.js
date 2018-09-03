@@ -5,6 +5,7 @@ import news from './plugins/news';
 import logger from './logger';
 import countdown from './plugins/countdown';
 import choose from './plugins/choose';
+import emotes from './plugins/emotes';
 
 const log = logger('bot:main');
 
@@ -19,6 +20,7 @@ async function init() {
 		news(client),
 		countdown(client),
 		choose(client),
+		emotes(client),
 	]);
 
 	const signals = {
@@ -28,17 +30,17 @@ async function init() {
 	};
 
 	Object.keys(signals).forEach((signal) => {
-		process.on(signal, () => {
+		process.on(signal, async () => {
 			log.info('shutting down');
-			stops.forEach((stop) => {
+			await Promise.all(stops.map(async (stop) => {
 				try {
 					if (stop) {
-						stop();
+						await stop();
 					}
 				} catch (e) {
 					log.error(`error stopping plugin: ${e}`);
 				}
-			});
+			}));
 			process.exit(128 + signals[signal]);
 		});
 	});
