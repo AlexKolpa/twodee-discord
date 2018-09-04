@@ -28,14 +28,18 @@ async function writeEmotes(content) {
 const emotes = new Promise(async (resolve) => {
 	let emotesContent;
 
+	let fileContent;
 	try {
-		const fileContent = await readFile(emotesFile, 'utf8');
-		emotesContent = JSON.parse(fileContent);
-		// Freeze objects to prevent changes being made outside this module
-		emotesContent.list.forEach(emote => Object.freeze(emote));
+		fileContent = await readFile(emotesFile, 'utf8');
 	} catch (e) {
 		log.warn(`unable to parse emotes file ${e}`);
 		emotesContent = { sequence: 0, list: [] };
+	}
+
+	if (fileContent) {
+		emotesContent = JSON.parse(fileContent);
+		// Freeze objects to prevent changes being made outside this module
+		emotesContent.list.forEach(emote => Object.freeze(emote));
 	}
 
 	let triggers = buildTriggers(emotesContent.list);

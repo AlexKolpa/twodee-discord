@@ -47,5 +47,7 @@ async function init() {
 		});
 	});
 }
-
-init();
+init().catch((e) => {
+	log.error(`Unexpected exception ${e}`);
+	process.exit(1);
+});
