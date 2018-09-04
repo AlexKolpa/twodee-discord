@@ -161,11 +161,15 @@ export default async function emotes(discord) {
 					description: `Could not find emote ${id}. Use !lcr to list emotes`,
 				});
 			}
+			let responseMessage = emote.message;
+			if (typeof responseMessage === 'object') {
+				responseMessage = 'RichEmbed object';
+			}
 			return new RichEmbed({
 				fields: [
 					{ name: 'Custom reaction deleted', value: emote.id },
 					{ name: 'Trigger', value: emote.trigger },
-					{ name: 'Response', value: JSON.stringify(emote.message) },
+					{ name: 'Response', value: responseMessage },
 				],
 			});
 		} catch (e) {
