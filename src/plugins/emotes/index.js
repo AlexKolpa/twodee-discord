@@ -7,6 +7,32 @@ const log = logger('plugins:emotes');
 
 const allowedKeys = ['color', 'image', 'description', 'title', 'thumbnail', 'url'];
 
+function parseResponseAsObject(response) {
+	return allowedKeys.reduce((acc, key) => {
+		const searchString = `${key}:`;
+		const startIndex = response.indexOf(searchString);
+		if (startIndex !== -1) {
+			const endIndex = response.indexOf(';', startIndex);
+			if (endIndex !== -1) {
+				const value = response.substring(startIndex + searchString.length, endIndex);
+				if (key === 'image') {
+					acc[key] = {
+						url: value,
+					};
+				} else if (key === 'color') {
+					const numberValue = Number(value);
+					if (numberValue) {
+						acc[key] = numberValue;
+					}
+				} else {
+					acc[key] = value;
+				}
+			}
+		}
+		return acc;
+	}, {});
+}
+
 export default async function emotes(discord) {
 	const editRoles = config.get('emotes.editRoles');
 
@@ -71,10 +97,18 @@ export default async function emotes(discord) {
 		}
 
 		let response = message.slice(2).join(' ');
-		if (response.startsWith('{')) {
+		// Check whether the command is embed by checking if it contains any of the key definitions
+		const embed = allowedKeys.some(key => response.startsWith(`${key}:`));
+		if (embed) {
 			try {
 				log.info(`parsing message object ${response}`);
-				response = JSON.parse(response);
+				response = parseResponseAsObject(response);
+
+				if (Object.keys(response).length === 0) {
+					return new RichEmbed({
+						description: 'Unable to parse emote message',
+					});
+				}
 			} catch (e) {
 				log.error(`Unable to parse object response ${e}`);
 				return new RichEmbed({
@@ -91,11 +125,16 @@ export default async function emotes(discord) {
 
 		try {
 			const emote = await emotesDb.add({ trigger: newCommand, message: response });
+			let responseMessage = emote.message;
+			if (typeof responseMessage === 'object') {
+				responseMessage = 'RichEmbed object';
+			}
 			return new RichEmbed({
+
 				fields: [
 					{ name: 'Custom reaction added', value: emote.id },
 					{ name: 'Trigger', value: emote.trigger },
-					{ name: 'Response', value: JSON.stringify(emote.message) },
+					{ name: 'Response', value: responseMessage },
 				],
 			});
 		} catch (e) {
