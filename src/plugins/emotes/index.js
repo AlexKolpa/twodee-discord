@@ -18,7 +18,6 @@ export default async function emotes(discord) {
 			const message = msg.content.split(' ');
 			const sendAll = message.length > 1 && message[1] === 'all';
 			if (sendAll) {
-
 				if (!editRoles.some(role => msg.member.roles.has(role))) {
 					return new RichEmbed({
 						description: 'You don\'t have the correct permissions to list all emotes!',

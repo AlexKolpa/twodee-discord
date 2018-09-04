@@ -5,6 +5,7 @@ import news from './plugins/news';
 import logger from './logger';
 import countdown from './plugins/countdown';
 import choose from './plugins/choose';
+import eightball from './plugins/eightball';
 import emotes from './plugins/emotes';
 
 const log = logger('bot:main');
@@ -20,6 +21,7 @@ async function init() {
 		news(client),
 		countdown(client),
 		choose(client),
+		eightball(client),
 		emotes(client),
 	]);
 
