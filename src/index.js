@@ -16,14 +16,20 @@ async function init() {
 	await client.login(config.get('discord.token'));
 
 	log.info('starting plugins');
-	const stops = await Promise.all([
-		reddit(client),
-		news(client),
-		countdown(client),
-		choose(client),
-		eightball(client),
-		emotes(client),
-	]);
+	let stops;
+	try {
+		stops = await Promise.all([
+			reddit(client),
+			news(client),
+			countdown(client),
+			choose(client),
+			eightball(client),
+			emotes(client),
+		]);
+	} catch (e) {
+		log.error(`Unexpected exception setting up plugins ${e}`);
+		process.exit(1);
+	}
 
 	const signals = {
 		SIGHUP: 1,
@@ -47,7 +53,5 @@ async function init() {
 		});
 	});
 }
-init().catch((e) => {
-	log.error(`Unexpected exception ${e}`);
-	process.exit(1);
-});
+
+init();
