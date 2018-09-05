@@ -15,7 +15,7 @@ function buildTriggers(emoteList) {
 		if (!acc[val.trigger]) {
 			acc[val.trigger] = [];
 		}
-		acc[val.trigger].push(val.message);
+		acc[val.trigger].push(val);
 		return acc;
 	}, {});
 }
@@ -78,13 +78,21 @@ const emotes = new Promise(async (resolve) => {
 
 			return emote;
 		},
-		getResponse(command) {
-			const trigger = triggers[command];
-			if (!trigger) {
+		getResponse(command, message) {
+			const commandTriggers = triggers[command];
+			if (!commandTriggers) {
 				return undefined;
 			}
 
-			return trigger[Math.floor(Math.random() * trigger.length)];
+			const id = Number(message);
+			if (id) {
+				const emote = commandTriggers.find(e => e.id === id);
+				if (emote) {
+					return emote.message;
+				}
+			}
+
+			return commandTriggers[Math.floor(Math.random() * commandTriggers.length)].message;
 		},
 		async close() {
 			await writeEmotes(emotesContent);
