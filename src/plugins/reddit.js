@@ -16,6 +16,11 @@ function limitLength(text, maxLength) {
 	return text.length > maxLength ? `${text.substring(0, maxLength - 3)}...` : text;
 }
 
+function isSupportedImageLink(url) {
+	// Yes this is an extremely lazy and not 100% accurate approach, but it suffices
+	return (url.match(/\.(jpeg|jpg|gif|png)$/) != null);
+}
+
 export default async function reddit(discord) {
 	log.info('setting up reddit plugin');
 
@@ -103,7 +108,7 @@ export default async function reddit(discord) {
 				message.color = subredditColors[submission.subreddit.display_name.toLowerCase()] || defaultBotColor;
 				if (submission.is_self) {
 					message.description = limitLength(submission.selftext, messageDescMaxLength);
-				} else {
+				} else if (isSupportedImageLink(submission.url)) {
 					message.image = { url: submission.url };
 				}
 				redditChannel.send(message);
