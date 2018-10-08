@@ -69,7 +69,7 @@ export default async function reddit(discord) {
 					newLastUpdate = submission.created_utc;
 				}
 
-				if (submission.removed) {
+				if (submission.removed || submission.author.name === '[deleted]') {
 					return;
 				}
 
@@ -83,10 +83,10 @@ export default async function reddit(discord) {
 
 	log.info('setting up Discord submission queue drainer');
 
-	const drainInterval = setInterval(() => {
+	const drainInterval = setInterval(async () => {
 		try {
 			const time = new Date().getTime() / 1000;
-			const newPosts = [];
+			let newPosts = [];
 			let nextIndex;
 			do {
 				nextIndex = submissionsToPost.findIndex(sub => sub.created_utc <= (time - minPostTimeSec));
@@ -96,9 +96,16 @@ export default async function reddit(discord) {
 				}
 			} while (nextIndex !== -1);
 
-			if (newPosts.length > 0) {
-				log.info(`posting ${newPosts.length} submission(s) to Discord`);
+			if (newPosts.length === 0) {
+				return;
 			}
+
+			// Fetch posts again as they might be outdated
+			const submissions = await Promise.all(newPosts.map(post => post.fetch()));
+			// Ensure the posts haven't been removed or deleted in the mean time
+			newPosts = submissions.filter(submission => !submission.removed && submission.author.name !== '[deleted]');
+
+			log.info(`posting ${newPosts.length} submission(s) to Discord`);
 
 			newPosts.forEach((submission) => {
 				const message = new RichEmbed();
