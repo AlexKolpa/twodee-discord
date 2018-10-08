@@ -69,7 +69,7 @@ export default async function reddit(discord) {
 					newLastUpdate = submission.created_utc;
 				}
 
-				if (submission.removed) {
+				if (submission.removed || submission.author.name === '[deleted]') {
 					return;
 				}
 
@@ -102,8 +102,8 @@ export default async function reddit(discord) {
 
 			// Fetch posts again as they might be outdated
 			const submissions = await Promise.all(newPosts.map(post => post.fetch()));
-			// Ensure the posts haven't been removed in the mean time
-			newPosts = submissions.filter(submission => !submission.removed);
+			// Ensure the posts haven't been removed or deleted in the mean time
+			newPosts = submissions.filter(submission => !submission.removed && submission.author.name !== '[deleted]');
 
 			log.info(`posting ${newPosts.length} submission(s) to Discord`);
 
