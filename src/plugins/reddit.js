@@ -12,6 +12,9 @@ const minPostTimeSec = 60;
 const messageTitleMaxLength = 256;
 const messageDescMaxLength = 2048;
 
+const recentUrls = [];
+const minUrlAgeSec = 1800;
+
 function limitLength(text, maxLength) {
 	return text.length > maxLength ? `${text.substring(0, maxLength - 3)}...` : text;
 }
@@ -19,6 +22,10 @@ function limitLength(text, maxLength) {
 function isSupportedImageLink(url) {
 	// Yes this is an extremely lazy and not 100% accurate approach, but it suffices
 	return (url.match(/\.(jpeg|jpg|gif|png)$/) != null);
+}
+
+function newerThan(seconds, date) {
+	return date > Date.now() - seconds * 1000;
 }
 
 export default async function reddit(discord) {
@@ -108,17 +115,23 @@ export default async function reddit(discord) {
 			log.info(`posting ${newPosts.length} submission(s) to Discord`);
 
 			newPosts.forEach((submission) => {
-				const message = new RichEmbed();
-				const title = `[${submission.subreddit.display_name}] [${submission.author.name}] ${submission.title}`;
-				message.title = limitLength(title, messageTitleMaxLength);
-				message.url = `https://reddit.com${submission.permalink}`;
-				message.color = subredditColors[submission.subreddit.display_name.toLowerCase()] || defaultBotColor;
-				if (submission.is_self) {
-					message.description = limitLength(submission.selftext, messageDescMaxLength);
-				} else if (isSupportedImageLink(submission.url)) {
-					message.image = { url: submission.url };
+				if (recentUrls.some(item => item.url && item.url === submission.url && newerThan(minUrlAgeSec, item.date))) {
+					log.info(`Url ${submission.url} was already recently posted, skipping.`);
+				} else {
+					recentUrls.push({ url: submission.url, date: new Date() });
+					if (recentUrls.length > 100) { recentUrls.shift(); }
+					const message = new RichEmbed();
+					const title = `[${submission.subreddit.display_name}] [${submission.author.name}] ${submission.title}`;
+					message.title = limitLength(title, messageTitleMaxLength);
+					message.url = `https://reddit.com${submission.permalink}`;
+					message.color = subredditColors[submission.subreddit.display_name.toLowerCase()] || defaultBotColor;
+					if (submission.is_self) {
+						message.description = limitLength(submission.selftext, messageDescMaxLength);
+					} else if (isSupportedImageLink(submission.url)) {
+						message.image = { url: submission.url };
+					}
+					redditChannel.send(message);
 				}
-				redditChannel.send(message);
 			});
 		} catch (e) {
 			log.error('Unable to share posts', e);
