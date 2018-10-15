@@ -1,1 +1,16 @@
+sudo: required
+
 language: node_js
+
+services:
+  - docker
+
+before_deploy:
+  - docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
+  - docker build -t twodee-discord .
+  - docker tag twodee-discord ${DOCKER_USERNAME}/twodee-discord
+deploy:
+  provider: script
+  script: docker push ${DOCKER_USERNAME}/twodee-discord
+  on:
+    branch: master
