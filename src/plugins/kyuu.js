@@ -29,11 +29,15 @@ function postKyuu(kyuuLink, channel) {
 
 function postRandomKyuu(channel) {
 	request('https://helveticascans.com/r/series/wonder-cat-kyuu-chan/', (error, response, body) => {
-		let kyuuLinks = (body.toString().match(/title"><a href="(.*?)" title="Chapter /g));
-		kyuuLinks = kyuuLinks.map(link => link.replace('title"><a href="', '').replace('" title="Chapter ', ''));
-		const kyuuLink = kyuuLinks ? kyuuLinks[Math.round(Math.random() * (kyuuLinks.length - 1))] : null;
-		if (kyuuLink) {
-			postKyuu(kyuuLink, channel);
+		if (error || response.statusCode !== 200) {
+			log.error('Failed to retrieve main Kyuu page', error || '');
+		} else {
+			let kyuuLinks = (body.toString().match(/title"><a href="(.*?)" title="Chapter /g));
+			kyuuLinks = kyuuLinks.map(link => link.replace('title"><a href="', '').replace('" title="Chapter ', ''));
+			const kyuuLink = kyuuLinks ? kyuuLinks[Math.round(Math.random() * (kyuuLinks.length - 1))] : null;
+			if (kyuuLink) {
+				postKyuu(kyuuLink, channel);
+			}
 		}
 	});
 }
