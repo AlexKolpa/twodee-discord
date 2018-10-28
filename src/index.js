@@ -7,6 +7,7 @@ import countdown from './plugins/countdown';
 import choose from './plugins/choose';
 import eightball from './plugins/eightball';
 import emotes from './plugins/emotes';
+import kyuu from './plugins/kyuu';
 
 const log = logger('bot:main');
 
@@ -25,6 +26,7 @@ async function init() {
 			choose(client),
 			eightball(client),
 			emotes(client),
+			kyuu(client),
 		]);
 	} catch (e) {
 		log.error(`Unexpected exception setting up plugins ${e}`);
