@@ -24,8 +24,8 @@ function isSupportedImageLink(url) {
 	return (url.match(/\.(jpeg|jpg|gif|png)$/) != null);
 }
 
-function newerThan(seconds, date) {
-	return date > Date.now() - seconds * 1000;
+function newerThan(seconds, time) {
+	return time > Date.now() - seconds * 1000;
 }
 
 export default async function reddit(discord) {
@@ -115,10 +115,10 @@ export default async function reddit(discord) {
 			log.info(`posting ${newPosts.length} submission(s) to Discord`);
 
 			newPosts.forEach((submission) => {
-				if (recentUrls.some(item => item.url && item.url === submission.url && newerThan(minUrlAgeSec, item.date))) {
+				if (recentUrls.some(item => item.url && item.url === submission.url && newerThan(minUrlAgeSec, item.time))) {
 					log.info(`Url ${submission.url} was already recently posted, skipping.`);
 				} else {
-					recentUrls.push({ url: submission.url, date: new Date() });
+					recentUrls.push({ url: submission.url, time: new Date().getTime() });
 					if (recentUrls.length > 100) { recentUrls.shift(); }
 					const message = new RichEmbed();
 					const title = `[${submission.subreddit.display_name}] [${submission.author.name}] ${submission.title}`;
