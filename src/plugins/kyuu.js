@@ -1,7 +1,9 @@
 import { RichEmbed } from 'discord.js';
-import request from 'request';
+import { promisify } from 'util';
+import req from 'request';
 import logger from '../logger';
 
+const request = promisify(req);
 const log = logger('plugins:kyuu');
 
 function sendErrorMessage(channel) {
@@ -10,35 +12,37 @@ function sendErrorMessage(channel) {
 	channel.send(message);
 }
 
-function postKyuu(kyuuLink, channel) {
-	request(kyuuLink, (error, response, body) => {
-		if (response.statusCode === 200) {
-			const imageUrl = body.toString().match(/class="open" src="(.*?)" \/>/)[1];
-			if (imageUrl) {
-				const message = new RichEmbed();
-				message.image = { url: imageUrl };
-				channel.send(message);
-			} else {
-				sendErrorMessage(channel);
-			}
+async function postKyuu(kyuuLink, channel) {
+	request(kyuuLink).then((result) => {
+		const imageUrl = result.body.toString().match(/class="open" src="(.*?)" \/>/)[1];
+		if (imageUrl) {
+			const message = new RichEmbed();
+			message.image = { url: imageUrl };
+			channel.send(message);
 		} else {
+			logger.error('Failed to parse Kyuu imageurl from ', kyuuLink);
 			sendErrorMessage(channel);
 		}
+	}).catch((error) => {
+		logger.error(`Request using link '${kyuuLink}' failed: `, error);
+		sendErrorMessage(channel);
 	});
 }
 
-function postRandomKyuu(channel) {
-	request('https://helveticascans.com/r/series/wonder-cat-kyuu-chan/', (error, response, body) => {
-		if (error || response.statusCode !== 200) {
-			log.error('Failed to retrieve main Kyuu page', error || '');
+async function postRandomKyuu(channel) {
+	request('https://helveticascans.com/r/series/wonder-cat-kyuu-chan/').then((result) => {
+		let kyuuLinks = (result.body.toString().match(/title"><a href="(.*?)" title="Chapter /g));
+		kyuuLinks = kyuuLinks.map(link => link.replace('title"><a href="', '').replace('" title="Chapter ', ''));
+		const kyuuLink = kyuuLinks ? kyuuLinks[Math.round(Math.random() * (kyuuLinks.length - 1))] : null;
+		if (kyuuLink) {
+			postKyuu(kyuuLink, channel);
 		} else {
-			let kyuuLinks = (body.toString().match(/title"><a href="(.*?)" title="Chapter /g));
-			kyuuLinks = kyuuLinks.map(link => link.replace('title"><a href="', '').replace('" title="Chapter ', ''));
-			const kyuuLink = kyuuLinks ? kyuuLinks[Math.round(Math.random() * (kyuuLinks.length - 1))] : null;
-			if (kyuuLink) {
-				postKyuu(kyuuLink, channel);
-			}
+			logger.error('Failed to parse random Kyuu link from response.');
+			sendErrorMessage(channel);
 		}
+	}).catch((error) => {
+		log.error('Failed to retrieve main Kyuu page', error || '');
+		sendErrorMessage(channel);
 	});
 }
 
