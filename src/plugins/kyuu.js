@@ -13,7 +13,8 @@ function sendErrorMessage(channel) {
 }
 
 async function postKyuu(kyuuLink, channel) {
-	request(kyuuLink).then((result) => {
+	try {
+		const result = await request(kyuuLink);
 		const imageUrl = result.body.toString().match(/class="open" src="(.*?)" \/>/)[1];
 		if (imageUrl) {
 			const message = new RichEmbed();
@@ -23,27 +24,28 @@ async function postKyuu(kyuuLink, channel) {
 			logger.error('Failed to parse Kyuu imageurl from ', kyuuLink);
 			sendErrorMessage(channel);
 		}
-	}).catch((error) => {
+	} catch (error) {
 		logger.error(`Request using link '${kyuuLink}' failed: `, error);
 		sendErrorMessage(channel);
-	});
+	}
 }
 
 async function postRandomKyuu(channel) {
-	request('https://helveticascans.com/r/series/wonder-cat-kyuu-chan/').then((result) => {
+	try {
+		const result = await request('https://helveticascans.com/r/series/wonder-cat-kyuu-chan/');
 		let kyuuLinks = (result.body.toString().match(/title"><a href="(.*?)" title="Chapter /g));
 		kyuuLinks = kyuuLinks.map(link => link.replace('title"><a href="', '').replace('" title="Chapter ', ''));
 		const kyuuLink = kyuuLinks ? kyuuLinks[Math.round(Math.random() * (kyuuLinks.length - 1))] : null;
 		if (kyuuLink) {
-			postKyuu(kyuuLink, channel);
+			await postKyuu(kyuuLink, channel);
 		} else {
 			logger.error('Failed to parse random Kyuu link from response.');
 			sendErrorMessage(channel);
 		}
-	}).catch((error) => {
+	} catch (error) {
 		log.error('Failed to retrieve main Kyuu page', error || '');
 		sendErrorMessage(channel);
-	});
+	}
 }
 
 export default async function kyuu(discord) {
