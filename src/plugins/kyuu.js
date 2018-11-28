@@ -21,11 +21,11 @@ async function postKyuu(kyuuLink, channel) {
 			message.image = { url: imageUrl };
 			channel.send(message);
 		} else {
-			logger.error('Failed to parse Kyuu imageurl from ', kyuuLink);
+			log.error('Failed to parse Kyuu imageurl from ', kyuuLink);
 			sendErrorMessage(channel);
 		}
 	} catch (error) {
-		logger.error(`Request using link '${kyuuLink}' failed: `, error);
+		log.error(`Request using link '${kyuuLink}' failed: `, error);
 		sendErrorMessage(channel);
 	}
 }
@@ -39,7 +39,7 @@ async function postRandomKyuu(channel) {
 		if (kyuuLink) {
 			await postKyuu(kyuuLink, channel);
 		} else {
-			logger.error('Failed to parse random Kyuu link from response.');
+			log.error('Failed to parse random Kyuu link from response.');
 			sendErrorMessage(channel);
 		}
 	} catch (error) {
