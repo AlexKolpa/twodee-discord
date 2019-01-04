@@ -202,7 +202,7 @@ export default async function emotes(discord) {
 				response = await deleteEmote(msg);
 				break;
 			default: {
-				response = emotesDb.getResponse(command, message.slice(2).join(' '));
+				response = emotesDb.getResponse(command, message.slice(1).join(' '));
 				break;
 			}
 		}
