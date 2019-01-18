@@ -28,7 +28,7 @@ async function init() {
 			eightball(client),
 			emotes(client),
 			kyuu(client),
-			animeinfo(client)
+			animeinfo(client),
 		]);
 	} catch (e) {
 		log.error(`Unexpected exception setting up plugins ${e}`);
