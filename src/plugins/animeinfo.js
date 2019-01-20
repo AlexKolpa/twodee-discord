@@ -4,9 +4,24 @@ import req from 'request';
 import logger from '../logger';
 
 const log = logger('plugins:animeinfo');
+const request = promisify(req);
+
 const months = ['January', 'February', 'March', 'April', 'May', 'June',
 	'July', 'August', 'September', 'October', 'November', 'December'];
-const request = promisify(req);
+const maxResults = 3;
+
+function getTitle(anime) {
+	if (anime.title) {
+		if (anime.title.romaji) {
+			return anime.title.romaji;
+		} if (anime.title.english) {
+			return anime.title.english;
+		}
+		return anime.title.native;
+	}
+	log.warn(`Anime with id ${anime.id} is missing a title.`);
+	return `Unknown anime with id ${anime.id}`;
+}
 
 function secondsToDhms(s) {
 	const seconds = Number(s);
@@ -41,7 +56,7 @@ function getAiringAt(anime) {
 }
 
 function getReleasingDescription(anime) {
-	const title = anime.title.romaji;
+	const title = getTitle(anime);
 	let description = '';
 	if (anime.nextAiringEpisode) {
 		const episode = anime.nextAiringEpisode.episode;
@@ -63,7 +78,7 @@ function getUntilAiringString(anime) {
 }
 
 function getNotYetReleasedDescription(anime) {
-	return `**${anime.title.romaji}** has not yet aired. ${getUntilAiringString(anime)}`;
+	return `**${getTitle(anime)}** has not yet aired. ${getUntilAiringString(anime)}`;
 }
 
 function getMessage(data) {
@@ -71,8 +86,8 @@ function getMessage(data) {
 	try {
 		message.description = '';
 		const totalAnime = data.data.Page.pageInfo.total;
-		if (totalAnime > 3) {
-			message.description += `Found ${totalAnime} airing or upcoming anime. Showing the first three:\n`;
+		if (totalAnime > maxResults) {
+			message.description += `Found ${totalAnime} airing or upcoming anime. Showing the first ${maxResults}:\n`;
 		}
 		data.data.Page.media.forEach((anime) => {
 			if (!message.thumbnail) {
@@ -98,7 +113,7 @@ function getMessage(data) {
 async function getAnimeInfo(searchTerm) {
 	const query = `
 	query ($search: String, $sort: [MediaSort], $type: MediaType, $isAdult: Boolean, $status_in: [MediaStatus]) {
-		Page (page: 1, perPage: 3) {
+		Page (page: 1, perPage: ${maxResults}) {
 			pageInfo {
 				total
 			}
@@ -110,7 +125,6 @@ async function getAnimeInfo(searchTerm) {
 					native
 				}
 				nextAiringEpisode {
-					airingAt
 					timeUntilAiring
 					episode
 				}
