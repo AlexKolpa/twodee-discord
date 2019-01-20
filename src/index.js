@@ -8,6 +8,7 @@ import choose from './plugins/choose';
 import eightball from './plugins/eightball';
 import emotes from './plugins/emotes';
 import kyuu from './plugins/kyuu';
+import animeinfo from './plugins/animeinfo';
 
 const log = logger('bot:main');
 
@@ -27,6 +28,7 @@ async function init() {
 			eightball(client),
 			emotes(client),
 			kyuu(client),
+			animeinfo(client),
 		]);
 	} catch (e) {
 		log.error(`Unexpected exception setting up plugins ${e}`);
