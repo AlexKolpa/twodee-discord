@@ -263,7 +263,7 @@ export default async function when(discord) {
 			const data = await findAnime(query);
 			const message = getSearchResultMessage(data);
 			msg.channel.send(message);
-		} else if (msg.content.startsWith('!animetoday')) {
+		} else if (msg.content.startsWith('!today')) {
 			const data = await getUpcomingAnime(maxHoursUntilAiring);
 			data.data.Page.media.sort((a, b) => {
 				if (a.nextAiringEpisode && !b.nextAiringEpisode) {
