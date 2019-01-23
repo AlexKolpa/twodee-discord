@@ -8,7 +8,9 @@ const request = promisify(req);
 
 const months = ['January', 'February', 'March', 'April', 'May', 'June',
 	'July', 'August', 'September', 'October', 'November', 'December'];
-const maxResults = 3;
+const maxSeachResults = 3;
+const maxUpcomingResults = 20;
+const maxHoursUntilAiring = 18;
 
 function getTitle(anime) {
 	if (anime.title) {
@@ -81,10 +83,10 @@ function getNotYetReleasedDescription(anime) {
 	return `**${getTitle(anime)}** has not yet aired. ${getUntilAiringString(anime)}`;
 }
 
-function getMessage(data) {
+function getMessage(data, description, maxResults) {
 	const message = new RichEmbed();
 	try {
-		message.description = '';
+		message.description = description;
 		const totalAnime = data.data.Page.pageInfo.total;
 		if (totalAnime > maxResults) {
 			message.description += `Found ${totalAnime} airing or upcoming anime. Showing the first ${maxResults}:\n`;
@@ -110,10 +112,106 @@ function getMessage(data) {
 	return message;
 }
 
-async function getAnimeInfo(searchTerm) {
+function getUpcomingMessage(data) {
+	const description = `The following anime will air in the next ${maxHoursUntilAiring} hours:\n`;
+	return getMessage(data, description, maxUpcomingResults);
+}
+
+function getSearchResultMessage(data) {
+	return getMessage(data, '', maxSeachResults);
+}
+
+async function queryAnilist(query, variables) {
+	const url = 'https://graphql.anilist.co';
+	const options = {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+			Accept: 'application/json',
+		},
+		body: JSON.stringify({
+			query,
+			variables,
+		}),
+	};
+	let body;
+	try {
+		const data = await request(url, options);
+		return JSON.parse(data.body);
+	} catch (e) {
+		log.error('Anilist API query failed. ', e);
+	}
+	return body;
+}
+
+async function getAnimeByMediaIds(mediaIds) {
+	const query = `
+	query ($id_in: [Int], $type: MediaType, $isAdult: Boolean, $status_in: [MediaStatus]) {
+		Page (page: 1, perPage: 100) {
+			pageInfo {
+				total
+			}
+			media (id_in: $id_in, type: $type, isAdult: $isAdult, status_in: $status_in) {
+				id
+				title {
+					romaji
+					english
+					native
+				}
+				nextAiringEpisode {
+					timeUntilAiring
+					episode
+				}
+				status
+				endDate{
+					year
+					month
+					day
+				}
+				startDate{
+					year
+					month
+					day
+				}
+				coverImage{
+					large
+				}
+			}
+		}
+	}`;
+	const variables = {
+		id_in: mediaIds,
+		type: 'ANIME',
+		isAdult: false,
+		status_in: ['RELEASING', 'NOT_YET_RELEASED'],
+	};
+	return queryAnilist(query, variables);
+}
+
+async function getUpcomingAnime(hoursUntilAiring) {
+	const query = `
+	query ($airingAt_lesser: Int, $airingAt_greater: Int) {
+		Page (page: 1, perPage: 100) {
+			airingSchedules (airingAt_lesser: $airingAt_lesser, airingAt_greater: $airingAt_greater) {
+				mediaId
+			}
+		}
+	}`;
+	const now = Math.floor(Date.now() / 1000);
+	const variables = {
+		airingAt_lesser: now + 3600 * hoursUntilAiring,
+		airingAt_greater: now,
+	};
+
+	const data = await queryAnilist(query, variables);
+	const mediaIds = data.data.Page.airingSchedules.map(x => x.mediaId);
+	return getAnimeByMediaIds(mediaIds);
+}
+
+async function findAnime(searchTerm) {
 	const query = `
 	query ($search: String, $sort: [MediaSort], $type: MediaType, $isAdult: Boolean, $status_in: [MediaStatus]) {
-		Page (page: 1, perPage: ${maxResults}) {
+		Page (page: 1, perPage: ${maxSeachResults}) {
 			pageInfo {
 				total
 			}
@@ -154,26 +252,7 @@ async function getAnimeInfo(searchTerm) {
 		status_in: ['RELEASING', 'NOT_YET_RELEASED'],
 	};
 
-	const url = 'https://graphql.anilist.co';
-	const options = {
-		method: 'POST',
-		headers: {
-			'Content-Type': 'application/json',
-			Accept: 'application/json',
-		},
-		body: JSON.stringify({
-			query,
-			variables,
-		}),
-	};
-	let body;
-	try {
-		const data = await request(url, options);
-		return JSON.parse(data.body);
-	} catch (e) {
-		log.error('Anilist API query failed. ', e);
-	}
-	return body;
+	return queryAnilist(query, variables);
 }
 
 export default async function when(discord) {
@@ -181,8 +260,20 @@ export default async function when(discord) {
 	discord.on('message', async (msg) => {
 		if (msg.content.startsWith('!when ')) {
 			const query = msg.content.substr(6);
-			const data = await getAnimeInfo(query);
-			const message = getMessage(data);
+			const data = await findAnime(query);
+			const message = getSearchResultMessage(data);
+			msg.channel.send(message);
+		} else if (msg.content.startsWith('!today')) {
+			const data = await getUpcomingAnime(maxHoursUntilAiring);
+			data.data.Page.media.sort((a, b) => {
+				if (a.nextAiringEpisode && !b.nextAiringEpisode) {
+					return -1;
+				} if (b.nextAiringEpisode && !a.nextAiringEpisode) {
+					return 1;
+				}
+				return a.nextAiringEpisode.timeUntilAiring < b.nextAiringEpisode.timeUntilAiring ? -1 : 1;
+			});
+			const message = getUpcomingMessage(data);
 			msg.channel.send(message);
 		}
 	});
