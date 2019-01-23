@@ -113,7 +113,8 @@ function getMessage(data, description, maxResults) {
 }
 
 function getUpcomingMessage(data) {
-	return getMessage(data, `The following anime will air in the next ${maxHoursUntilAiring} hours.\n`, maxUpcomingResults);
+	const description = `The following anime will air in the next ${maxHoursUntilAiring} hours:\n`;
+	return getMessage(data, description, maxUpcomingResults);
 }
 
 function getSearchResultMessage(data) {
@@ -121,7 +122,6 @@ function getSearchResultMessage(data) {
 }
 
 async function queryAnilist(query, variables) {
-	log.info(JSON.stringify(variables, undefined, 2));
 	const url = 'https://graphql.anilist.co';
 	const options = {
 		method: 'POST',
@@ -146,12 +146,12 @@ async function queryAnilist(query, variables) {
 
 async function getAnimeByMediaIds(mediaIds) {
 	const query = `
-	query ($id_in: [Int], $sort: [MediaSort], $type: MediaType, $isAdult: Boolean, $status_in: [MediaStatus]) {
+	query ($id_in: [Int], $type: MediaType, $isAdult: Boolean, $status_in: [MediaStatus]) {
 		Page (page: 1, perPage: 100) {
 			pageInfo {
 				total
 			}
-			media (id_in: $id_in, sort: $sort, type: $type, isAdult: $isAdult, status_in: $status_in) {
+			media (id_in: $id_in, type: $type, isAdult: $isAdult, status_in: $status_in) {
 				id
 				title {
 					romaji
@@ -181,7 +181,6 @@ async function getAnimeByMediaIds(mediaIds) {
 	}`;
 	const variables = {
 		id_in: mediaIds,
-		sort: ['STATUS', 'POPULARITY_DESC'],
 		type: 'ANIME',
 		isAdult: false,
 		status_in: ['RELEASING', 'NOT_YET_RELEASED'],
@@ -266,6 +265,14 @@ export default async function when(discord) {
 			msg.channel.send(message);
 		} else if (msg.content.startsWith('!animetoday')) {
 			const data = await getUpcomingAnime(maxHoursUntilAiring);
+			data.data.Page.media.sort((a, b) => {
+				if (a.nextAiringEpisode && !b.nextAiringEpisode) {
+					return -1;
+				} if (b.nextAiringEpisode && !a.nextAiringEpisode) {
+					return 1;
+				}
+				return a.nextAiringEpisode.timeUntilAiring < b.nextAiringEpisode.timeUntilAiring ? -1 : 1;
+			});
 			const message = getUpcomingMessage(data);
 			msg.channel.send(message);
 		}
