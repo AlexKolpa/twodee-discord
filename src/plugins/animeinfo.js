@@ -146,12 +146,12 @@ async function queryAnilist(query, variables) {
 
 async function getAnimeByMediaIds(mediaIds) {
 	const query = `
-	query ($id_in: [Int], $type: MediaType, $isAdult: Boolean, $status_in: [MediaStatus]) {
+	query ($id_in: [Int], $type: MediaType, $isAdult: Boolean, $status_in: [MediaStatus], $tag_not_in: [String]) {
 		Page (page: 1, perPage: 100) {
 			pageInfo {
 				total
 			}
-			media (id_in: $id_in, type: $type, isAdult: $isAdult, status_in: $status_in) {
+			media (id_in: $id_in, type: $type, isAdult: $isAdult, status_in: $status_in, tag_not_in: $tag_not_in) {
 				id
 				title {
 					romaji
@@ -184,6 +184,7 @@ async function getAnimeByMediaIds(mediaIds) {
 		type: 'ANIME',
 		isAdult: false,
 		status_in: ['RELEASING', 'NOT_YET_RELEASED'],
+		tag_not_in: ['Kids'],
 	};
 	return queryAnilist(query, variables);
 }
