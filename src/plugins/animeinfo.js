@@ -26,7 +26,7 @@ function getTitle(anime) {
 }
 
 function getAnilistLink(anime, title) {
-	return `[**${title}**](https://anilist.co/anime/${anime.id})`;
+	return `**[${title}](https://anilist.co/anime/${anime.id})**`;
 }
 
 function secondsToDhms(s) {
