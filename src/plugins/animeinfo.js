@@ -25,6 +25,10 @@ function getTitle(anime) {
 	return `Unknown anime with id ${anime.id}`;
 }
 
+function getAnilistLink(anime, title) {
+	return `[**${title}**](https://anilist.co/anime/${anime.id})`;
+}
+
 function secondsToDhms(s) {
 	const seconds = Number(s);
 	const d = Math.floor(seconds / (3600 * 24));
@@ -58,7 +62,7 @@ function getAiringAt(anime) {
 }
 
 function getReleasingDescription(anime) {
-	const title = getTitle(anime);
+	const aniListLink = getAnilistLink(anime, getTitle(anime));
 	let description = '';
 	if (anime.nextAiringEpisode) {
 		const episode = anime.nextAiringEpisode.episode;
@@ -67,9 +71,9 @@ function getReleasingDescription(anime) {
 		}
 	}
 	if (anime.nextAiringEpisode) {
-		description += `**${title}** airs in ${getAiringAt(anime)}.`;
+		description += `${aniListLink} airs in ${getAiringAt(anime)}.`;
 	} else {
-		description += `**${title}** started airing in ${getAiringAt(anime)}.`;
+		description += `${aniListLink} started airing in ${getAiringAt(anime)}.`;
 	}
 	return description;
 }
@@ -80,7 +84,8 @@ function getUntilAiringString(anime) {
 }
 
 function getNotYetReleasedDescription(anime) {
-	return `**${getTitle(anime)}** has not yet aired. ${getUntilAiringString(anime)}`;
+	const aniListLink = getAnilistLink(anime, getTitle(anime));
+	return `${aniListLink} has not yet aired. ${getUntilAiringString(anime)}`;
 }
 
 function getMessage(data, description, maxResults) {
