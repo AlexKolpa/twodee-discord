@@ -7,7 +7,7 @@ const log = logger('plugins:youtube');
 const key = config.get('youtube.key');
 
 export default async function youtube(discord) {
-	log.info('starting choose plugin');
+	log.info('starting youtube plugin');
 	discord.on('message', async (msg) => {
 		if (msg.content.startsWith('!yt ')) {
 			const query = msg.content.substring(4);
