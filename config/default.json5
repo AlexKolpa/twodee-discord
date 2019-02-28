@@ -19,4 +19,7 @@
     // 'Mod' role
     editRoles: ['473766183447822336'],
   },
+  youtube: {
+    key: '',
+  },
 }
