@@ -129,6 +129,8 @@ export default async function reddit(discord) {
 						message.description = limitLength(submission.selftext, messageDescMaxLength);
 					} else if (isSupportedImageLink(submission.url)) {
 						message.image = { url: submission.url };
+					} else if (submission.url.includes('//imgur.com/')) {
+						message.image = { url: `https://i.imgur.com/${submission.url.split('/').pop()}.jpg` };
 					}
 					redditChannel.send(message);
 				}
