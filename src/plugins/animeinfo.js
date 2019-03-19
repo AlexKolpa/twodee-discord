@@ -252,7 +252,7 @@ async function findAnime(searchTerm) {
 
 	const variables = {
 		search: searchTerm,
-		sort: ['STATUS', 'POPULARITY_DESC'],
+		sort: ['SEARCH_MATCH', 'STATUS', 'POPULARITY_DESC'],
 		type: 'ANIME',
 		isAdult: false,
 		status_in: ['RELEASING', 'NOT_YET_RELEASED'],
