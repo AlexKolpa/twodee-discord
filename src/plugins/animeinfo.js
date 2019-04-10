@@ -46,6 +46,9 @@ function secondsToDhms(seconds) {
 	if (d > 0) {
 		return (dDisplay + hDisplay).slice(0, -2);
 	}
+	if (!mDisplay) {
+		return hDisplay.slice(0, -2);
+	}
 	return hDisplay + mDisplay;
 }
 
