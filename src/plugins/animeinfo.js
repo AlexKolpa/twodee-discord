@@ -100,7 +100,7 @@ function getMessage(data, description, maxResults) {
 	const message = new RichEmbed();
 	try {
 		message.description = description;
-		const totalAnime = data.data.Page.pageInfo.total;
+		const totalAnime = data.data.Page.media.length;
 		if (totalAnime > maxResults) {
 			message.description += `Found ${totalAnime} airing or upcoming anime. Showing the first ${maxResults}:\n`;
 		}
