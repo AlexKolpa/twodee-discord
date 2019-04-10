@@ -97,7 +97,7 @@ function getMessage(data, description, maxResults) {
 	const message = new RichEmbed();
 	try {
 		message.description = description;
-		const totalAnime = data.data.Page.pageInfo.total;
+		const totalAnime = data.data.Page.media.length;
 		if (totalAnime > maxResults) {
 			message.description += `Found ${totalAnime} airing or upcoming anime. Showing the first ${maxResults}:\n`;
 		}
@@ -251,6 +251,7 @@ async function findAnime(searchTerm) {
 				coverImage{
 					large
 				}
+				synonyms
 			}
 		}
 	}`;
@@ -272,6 +273,11 @@ export default async function when(discord) {
 		if (msg.content.startsWith('!when ')) {
 			const query = msg.content.substr(6);
 			const data = await findAnime(query);
+			const q = query.toLowerCase();
+			data.data.Page.media = data.data.Page.media.filter(media => media.synonyms.some(s => s.toLowerCase().includes(q)
+				|| (media.title.romaji && media.title.romaji.toLowerCase().includes(q))
+				|| (media.title.native && media.title.native.toLowerCase().includes(q))
+				|| (media.title.english && media.title.english.toLowerCase().includes(q))));
 			const message = getSearchResultMessage(data);
 			msg.channel.send(message);
 		} else if (msg.content.startsWith('!today')) {
