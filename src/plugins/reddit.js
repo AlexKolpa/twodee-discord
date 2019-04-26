@@ -1,7 +1,11 @@
 import Snoowrap from 'snoowrap';
 import { RichEmbed } from 'discord.js';
 import config from 'config';
+import { promisify } from 'util';
+import req from 'request';
 import logger from '../logger';
+
+const request = promisify(req);
 
 const log = logger('plugins:reddit');
 
@@ -15,6 +19,8 @@ const messageDescMaxLength = 2048;
 const recentUrls = [];
 const minUrlAgeSec = 1800;
 
+const imgurClientId = config.get('imgur.clientId');
+
 function limitLength(text, maxLength) {
 	return text.length > maxLength ? `${text.substring(0, maxLength - 3)}...` : text;
 }
@@ -26,6 +32,31 @@ function isSupportedImageLink(url) {
 
 function newerThan(seconds, time) {
 	return time > Date.now() - seconds * 1000;
+}
+
+async function getImgurImage(albumOrPostUrl) {
+	try {
+		const url = new URL(albumOrPostUrl);
+		const albumId = url.pathname.split('/').pop();
+		// True Imgur album
+		if (albumOrPostUrl.includes('/a/')) {
+			const response = await request(`https://api.imgur.com/3/album/${albumId}/images`, { headers: { Authorization: `Client-ID ${imgurClientId}` } });
+			if (response.statusCode === 200) {
+				const images = JSON.parse(response.body).data;
+				if (images.length > 0) {
+					return images[0].link;
+				}
+			}
+		} else { // Imgur post
+			const response = await request(`https://api.imgur.com/3/image/${albumId}`, { headers: { Authorization: `Client-ID ${imgurClientId}` } });
+			if (response.statusCode === 200) {
+				return JSON.parse(response.body).data.link;
+			}
+		}
+	} catch (e) {
+		log.error('Exception accessing Imgur API', e);
+	}
+	return null;
 }
 
 export default async function reddit(discord) {
@@ -114,7 +145,7 @@ export default async function reddit(discord) {
 
 			log.info(`posting ${newPosts.length} submission(s) to Discord`);
 
-			newPosts.forEach((submission) => {
+			newPosts.forEach(async (submission) => {
 				if (recentUrls.some(item => item.url && item.url === submission.url && newerThan(minUrlAgeSec, item.time))) {
 					log.info(`Url ${submission.url} was already recently posted, skipping.`);
 				} else {
@@ -129,6 +160,11 @@ export default async function reddit(discord) {
 						message.description = limitLength(submission.selftext, messageDescMaxLength);
 					} else if (isSupportedImageLink(submission.url)) {
 						message.image = { url: submission.url };
+					} else if (submission.url.includes('//imgur.com/')) {
+						const url = await getImgurImage(submission.url);
+						if (url) {
+							message.image = { url };
+						}
 					}
 					redditChannel.send(message);
 				}
