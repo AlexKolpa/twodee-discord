@@ -9,10 +9,11 @@ const moment = require('moment');
 
 const months = ['January', 'February', 'March', 'April', 'May', 'June',
 	'July', 'August', 'September', 'October', 'November', 'December'];
-const maxSeachResults = 3;
+const maxSeachResults = 5;
 const maxUpcomingResults = 20;
-const maxHoursUntilAiring = 18;
+const maxHoursUntilAiring = 24;
 const maxHoursPast = 48;
+const secondsInYear = 365 * 24 * 3600;
 
 function getTitle(anime) {
 	if (anime.title) {
@@ -75,10 +76,10 @@ function getAiringAt(anime) {
 function getReleasingDescription(anime) {
 	const aniListLink = getAnilistLink(anime, getTitle(anime));
 	let description = '';
-	const latestPrevEp = anime.airingSchedule.edges.filter(n => n.node.timeUntilAiring < 0).pop();
-	if (latestPrevEp.node.timeUntilAiring < 0 && latestPrevEp.node.timeUntilAiring + maxHoursPast * 3600 > 0) {
-		return `Episode ${latestPrevEp.node.episode} of ${aniListLink}
-		aired ${secondsToDhms(latestPrevEp.node.timeUntilAiring)} ago.`;
+	const prevEp = anime.airingSchedule.edges.filter(n => n.node.timeUntilAiring < 0).pop();
+	if (prevEp && prevEp.node.timeUntilAiring < 0 && prevEp.node.timeUntilAiring + maxHoursPast * 3600 > 0) {
+		return `Episode ${prevEp.node.episode} of ${aniListLink}
+		aired ${secondsToDhms(prevEp.node.timeUntilAiring)} ago.`;
 	}
 	if (anime.nextAiringEpisode) {
 		const episode = anime.nextAiringEpisode.episode;
@@ -112,11 +113,15 @@ function getNotYetReleasedDescription(anime) {
 
 function getFinishedDescription(anime) {
 	const aniListLink = getAnilistLink(anime, getTitle(anime));
-	if (anime.endDate) {
-		const date = new Date(anime.endDate.year, anime.endDate.month, anime.endDate.day);
+	if (anime.endDate.year || anime.startDate.year) {
+		// Movies and such have no end date, use start date instead
+		const year = anime.endDate.year ? anime.endDate.year : anime.startDate.year;
+		const month = anime.endDate.month ? anime.endDate.month : anime.startDate.month;
+		const day = anime.endDate.day ? anime.endDate.day : anime.startDate.day;
+		const date = new Date(year, month, day);
 		const secondsSinceEnded = (new Date().getTime() - date.getTime()) / 1000;
-		if (secondsSinceEnded > 365 * 24 * 3600) {
-			return `${aniListLink} aired in ${capitalize(anime.season)} ${anime.endDate.year}.`;
+		if (secondsSinceEnded > secondsInYear) {
+			return `${aniListLink} aired in ${capitalize(anime.season)} ${year}.`;
 		}
 		return `${aniListLink} finished airing ${secondsToDhms(secondsSinceEnded)} ago.`;
 	}
