@@ -1,12 +1,11 @@
 import { RichEmbed } from 'discord.js';
 import { promisify } from 'util';
 import req from 'request';
+import moment from 'moment';
 import logger from '../logger';
 
 const log = logger('plugins:animeinfo');
 const request = promisify(req);
-const moment = require('moment');
-
 const months = ['January', 'February', 'March', 'April', 'May', 'June',
 	'July', 'August', 'September', 'October', 'November', 'December'];
 const maxSeachResults = 5;
