@@ -5,12 +5,14 @@ import logger from '../logger';
 
 const log = logger('plugins:animeinfo');
 const request = promisify(req);
+const moment = require('moment');
 
 const months = ['January', 'February', 'March', 'April', 'May', 'June',
 	'July', 'August', 'September', 'October', 'November', 'December'];
 const maxSeachResults = 3;
 const maxUpcomingResults = 20;
 const maxHoursUntilAiring = 18;
+const maxHoursPast = 48;
 
 function getTitle(anime) {
 	if (anime.title) {
@@ -30,26 +32,27 @@ function getAnilistLink(anime, title) {
 }
 
 function secondsToDhms(seconds) {
-	const s = Number(seconds);
-	const d = Math.floor(s / (3600 * 24));
-	const h = Math.floor((s % (3600 * 24)) / 3600);
-	const m = Math.floor((s % 3600) / 60);
-
-	const dDisplay = d > 0 ? d + (d === 1 ? ' day, ' : ' days, ') : '';
-	const hDisplay = h > 0 ? h + (h === 1 ? ' hour, ' : ' hours, ') : '';
-	const mDisplay = m > 0 ? m + (m === 1 ? ' minute' : ' minutes') : '';
-	const sDisplay = s > 0 ? s + (s === 1 ? ' second' : ' seconds') : '';
-
-	if (!dDisplay && !hDisplay && !mDisplay) {
-		return sDisplay || 'less than a second';
+	const s = Math.abs(Number(seconds));
+	const time = {
+		years: Math.round(moment.duration(s, 'seconds').years()),
+		months: Math.round(moment.duration(s, 'seconds').months()),
+		days: Math.round(moment.duration(s, 'seconds').days()),
+		hours: Math.round(moment.duration(s, 'seconds').hours()),
+		minutes: Math.round(moment.duration(s, 'seconds').minutes()),
+		seconds: Math.round(moment.duration(s, 'seconds').seconds()),
+	};
+	let o = '';
+	// eslint-disable-next-line no-restricted-syntax
+	for (const key in time) {
+		if (time[key] > 0) {
+			if (o === '') {
+				o += `${time[key]} ${key}`;
+			} else {
+				return `${o}, ${time[key]} ${key}`;
+			}
+		}
 	}
-	if (d > 0) {
-		return (dDisplay + hDisplay).slice(0, -2);
-	}
-	if (!mDisplay) {
-		return hDisplay.slice(0, -2);
-	}
-	return hDisplay + mDisplay;
+	return o;
 }
 
 function getAiringAt(anime) {
@@ -72,6 +75,11 @@ function getAiringAt(anime) {
 function getReleasingDescription(anime) {
 	const aniListLink = getAnilistLink(anime, getTitle(anime));
 	let description = '';
+	const latestPrevEp = anime.airingSchedule.edges.filter(n => n.node.timeUntilAiring < 0).pop();
+	if (latestPrevEp.node.timeUntilAiring < 0 && latestPrevEp.node.timeUntilAiring + maxHoursPast * 3600 > 0) {
+		return `Episode ${latestPrevEp.node.episode} of ${aniListLink}
+		aired ${secondsToDhms(latestPrevEp.node.timeUntilAiring)} ago.`;
+	}
 	if (anime.nextAiringEpisode) {
 		const episode = anime.nextAiringEpisode.episode;
 		if (episode) {
@@ -86,6 +94,12 @@ function getReleasingDescription(anime) {
 	return description;
 }
 
+function capitalize(s) {
+	if (typeof s !== 'string') return '';
+	const lowercase = s.toLowerCase();
+	return lowercase.charAt(0).toUpperCase() + lowercase.slice(1);
+}
+
 function getUntilAiringString(anime) {
 	const airingAt = getAiringAt(anime);
 	return airingAt ? `It will air in ${airingAt}.` : '';
@@ -95,6 +109,20 @@ function getNotYetReleasedDescription(anime) {
 	const aniListLink = getAnilistLink(anime, getTitle(anime));
 	return `${aniListLink} has not yet aired. ${getUntilAiringString(anime)}`;
 }
+
+function getFinishedDescription(anime) {
+	const aniListLink = getAnilistLink(anime, getTitle(anime));
+	if (anime.endDate) {
+		const date = new Date(anime.endDate.year, anime.endDate.month, anime.endDate.day);
+		const secondsSinceEnded = (new Date().getTime() - date.getTime()) / 1000;
+		if (secondsSinceEnded > 365 * 24 * 3600) {
+			return `${aniListLink} aired in ${capitalize(anime.season)} ${anime.endDate.year}.`;
+		}
+		return `${aniListLink} finished airing ${secondsToDhms(secondsSinceEnded)} ago.`;
+	}
+	return `${aniListLink} has finished airing.`;
+}
+
 
 function getMessage(data, description, maxResults) {
 	const message = new RichEmbed();
@@ -114,6 +142,9 @@ function getMessage(data, description, maxResults) {
 			} else if (anime.status === 'NOT_YET_RELEASED') {
 				if (message.description.length > 0) message.description += '\n';
 				message.description += getNotYetReleasedDescription(anime);
+			} else if (anime.status === 'FINISHED') {
+				if (message.description.length > 0) message.description += '\n';
+				message.description += getFinishedDescription(anime);
 			}
 		});
 		if (data.data.Page.media.length === 0) {
@@ -189,6 +220,14 @@ async function getAnimeByMediaIds(mediaIds) {
 				coverImage{
 					large
 				}
+				airingSchedule(notYetAired: false, page: 1, perPage: 25) {
+					edges {
+						node {
+							episode,
+							timeUntilAiring
+					  	}
+					}
+				}
 			}
 		}
 	}`;
@@ -246,6 +285,7 @@ async function findAnime(searchTerm) {
 					month
 					day
 				}
+				season
 				startDate{
 					year
 					month
@@ -255,6 +295,14 @@ async function findAnime(searchTerm) {
 					large
 				}
 				synonyms
+				airingSchedule(notYetAired: false, page: 1, perPage: 25) {
+					edges {
+						node {
+							episode,
+							timeUntilAiring
+					  	}
+					}
+				}
 			}
 		}
 	}`;
@@ -264,7 +312,7 @@ async function findAnime(searchTerm) {
 		sort: ['SEARCH_MATCH', 'STATUS', 'POPULARITY_DESC'],
 		type: 'ANIME',
 		isAdult: false,
-		status_in: ['RELEASING', 'NOT_YET_RELEASED'],
+		status_in: ['FINISHED', 'RELEASING', 'NOT_YET_RELEASED'],
 	};
 
 	return queryAnilist(query, variables);
