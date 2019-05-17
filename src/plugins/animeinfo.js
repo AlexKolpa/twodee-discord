@@ -1,16 +1,15 @@
 import { RichEmbed } from 'discord.js';
 import { promisify } from 'util';
 import req from 'request';
+import moment from 'moment';
 import logger from '../logger';
 
 const log = logger('plugins:animeinfo');
 const request = promisify(req);
-
-const months = ['January', 'February', 'March', 'April', 'May', 'June',
-	'July', 'August', 'September', 'October', 'November', 'December'];
-const maxSeachResults = 3;
+const maxSeachResults = 5;
 const maxUpcomingResults = 20;
-const maxHoursUntilAiring = 18;
+const maxHoursUntilAiring = 24;
+const maxHoursPast = 48;
 
 function getTitle(anime) {
 	if (anime.title) {
@@ -29,39 +28,16 @@ function getAnilistLink(anime, title) {
 	return `**[${title}](https://anilist.co/anime/${anime.id})**`;
 }
 
-function secondsToDhms(seconds) {
-	const s = Number(seconds);
-	const d = Math.floor(s / (3600 * 24));
-	const h = Math.floor((s % (3600 * 24)) / 3600);
-	const m = Math.floor((s % 3600) / 60);
-
-	const dDisplay = d > 0 ? d + (d === 1 ? ' day, ' : ' days, ') : '';
-	const hDisplay = h > 0 ? h + (h === 1 ? ' hour, ' : ' hours, ') : '';
-	const mDisplay = m > 0 ? m + (m === 1 ? ' minute' : ' minutes') : '';
-	const sDisplay = s > 0 ? s + (s === 1 ? ' second' : ' seconds') : '';
-
-	if (!dDisplay && !hDisplay && !mDisplay) {
-		return sDisplay || 'less than a second';
-	}
-	if (d > 0) {
-		return (dDisplay + hDisplay).slice(0, -2);
-	}
-	if (!mDisplay) {
-		return hDisplay.slice(0, -2);
-	}
-	return hDisplay + mDisplay;
-}
-
 function getAiringAt(anime) {
 	let airingAt;
 	if (anime.nextAiringEpisode) {
 		const secondsUntilAiring = anime.nextAiringEpisode.timeUntilAiring;
-		airingAt = secondsToDhms(secondsUntilAiring);
+		airingAt = moment().add(secondsUntilAiring, 'seconds').fromNow();
 	} else if (anime.startDate) {
 		const year = anime.startDate.year;
 		const month = anime.startDate.month;
 		if (month && year) {
-			airingAt = `${months[month - 1]} ${year}`;
+			airingAt = moment([year, month - 1]).fromNow();
 		} else if (year) {
 			airingAt = year;
 		}
@@ -72,6 +48,11 @@ function getAiringAt(anime) {
 function getReleasingDescription(anime) {
 	const aniListLink = getAnilistLink(anime, getTitle(anime));
 	let description = '';
+	const prevEp = anime.airingSchedule.edges.filter(n => n.node.timeUntilAiring < 0).pop();
+	if (prevEp && prevEp.node.timeUntilAiring < 0 && prevEp.node.timeUntilAiring + maxHoursPast * 3600 > 0) {
+		return `Episode ${prevEp.node.episode} of ${aniListLink}
+		aired ${moment().add(prevEp.node.timeUntilAiring, 'seconds').fromNow()}.`;
+	}
 	if (anime.nextAiringEpisode) {
 		const episode = anime.nextAiringEpisode.episode;
 		if (episode) {
@@ -79,21 +60,43 @@ function getReleasingDescription(anime) {
 		}
 	}
 	if (anime.nextAiringEpisode) {
-		description += `${aniListLink} airs in ${getAiringAt(anime)}.`;
+		description += `${aniListLink} airs ${getAiringAt(anime)}.`;
 	} else {
-		description += `${aniListLink} started airing in ${getAiringAt(anime)}.`;
+		description += `${aniListLink} started airing ${getAiringAt(anime)}.`;
 	}
 	return description;
 }
 
+function capitalize(s) {
+	if (typeof s !== 'string') return '';
+	const lowercase = s.toLowerCase();
+	return lowercase.charAt(0).toUpperCase() + lowercase.slice(1);
+}
+
 function getUntilAiringString(anime) {
 	const airingAt = getAiringAt(anime);
-	return airingAt ? `It will air in ${airingAt}.` : '';
+	return airingAt ? `It will air ${airingAt}.` : '';
 }
 
 function getNotYetReleasedDescription(anime) {
 	const aniListLink = getAnilistLink(anime, getTitle(anime));
 	return `${aniListLink} has not yet aired. ${getUntilAiringString(anime)}`;
+}
+
+function getFinishedDescription(anime) {
+	const aniListLink = getAnilistLink(anime, getTitle(anime));
+	if (anime.endDate.day || anime.startDate.day) {
+		// Movies and such have no end date, use start date instead
+		const year = anime.endDate.year || anime.startDate.year;
+		const month = anime.endDate.month || anime.startDate.month;
+		const day = anime.endDate.day || anime.startDate.day;
+		const ended = moment([year, month - 1, day]);
+		if (moment().subtract(1, 'year').isAfter(ended)) {
+			return `${aniListLink} aired in ${capitalize(anime.season)} ${year}.`;
+		}
+		return `${aniListLink} finished airing ${ended.fromNow()}.`;
+	}
+	return `${aniListLink} has finished airing.`;
 }
 
 function getMessage(data, description, maxResults) {
@@ -114,10 +117,13 @@ function getMessage(data, description, maxResults) {
 			} else if (anime.status === 'NOT_YET_RELEASED') {
 				if (message.description.length > 0) message.description += '\n';
 				message.description += getNotYetReleasedDescription(anime);
+			} else if (anime.status === 'FINISHED') {
+				if (message.description.length > 0) message.description += '\n';
+				message.description += getFinishedDescription(anime);
 			}
 		});
 		if (data.data.Page.media.length === 0) {
-			message.description += 'Could not find any airing or upcoming anime with that search term. Try again!';
+			message.description += 'Could not find any anime with that search term. Try again!';
 		}
 	} catch (e) {
 		return log.error('Failed to create anime Discord message.', e);
@@ -189,6 +195,14 @@ async function getAnimeByMediaIds(mediaIds) {
 				coverImage{
 					large
 				}
+				airingSchedule(notYetAired: false, page: 1, perPage: 25) {
+					edges {
+						node {
+							episode,
+							timeUntilAiring
+					  	}
+					}
+				}
 			}
 		}
 	}`;
@@ -246,6 +260,7 @@ async function findAnime(searchTerm) {
 					month
 					day
 				}
+				season
 				startDate{
 					year
 					month
@@ -255,6 +270,14 @@ async function findAnime(searchTerm) {
 					large
 				}
 				synonyms
+				airingSchedule(notYetAired: false, page: 1, perPage: 25) {
+					edges {
+						node {
+							episode,
+							timeUntilAiring
+					  	}
+					}
+				}
 			}
 		}
 	}`;
@@ -264,7 +287,7 @@ async function findAnime(searchTerm) {
 		sort: ['SEARCH_MATCH', 'STATUS', 'POPULARITY_DESC'],
 		type: 'ANIME',
 		isAdult: false,
-		status_in: ['RELEASING', 'NOT_YET_RELEASED'],
+		status_in: ['FINISHED', 'RELEASING', 'NOT_YET_RELEASED'],
 	};
 
 	return queryAnilist(query, variables);

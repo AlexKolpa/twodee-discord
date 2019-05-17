@@ -14,6 +14,7 @@
   "dependencies": {
     "config": "^2.0.1",
     "discord.js": "^11.4.2",
+    "moment": "^2.24.0",
     "open-graph": "^0.2.3",
     "request": "^2.88.0",
     "rss-parser": "^3.4.3",
@@ -25,7 +26,7 @@
     "babel-eslint": "^8.2.6",
     "babel-preset-env": "^1.7.0",
     "babel-preset-es2015": "^6.24.1",
-    "eslint": "^5.4.0",
+    "eslint": "^5.16.0",
     "eslint-config-airbnb-base": "^13.1.0",
     "eslint-plugin-import": "^2.14.0"
   }
