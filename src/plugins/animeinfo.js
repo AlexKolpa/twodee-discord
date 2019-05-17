@@ -94,11 +94,10 @@ function getFinishedDescription(anime) {
 		if (moment().subtract(1, 'year').isAfter(ended)) {
 			return `${aniListLink} aired in ${capitalize(anime.season)} ${year}.`;
 		}
-		return `${aniListLink} finished airing ${moment([year, month - 1, day]).fromNow()}.`;
+		return `${aniListLink} finished airing ${ended.fromNow()}.`;
 	}
 	return `${aniListLink} has finished airing.`;
 }
-
 
 function getMessage(data, description, maxResults) {
 	const message = new RichEmbed();
