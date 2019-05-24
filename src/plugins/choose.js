@@ -8,7 +8,7 @@ const chooseVerbs = ['chose', 'prefers', 'is thinking', 'is pondering',
 export default async function choose(discord) {
 	log.info('starting choose plugin');
 	discord.on('message', (msg) => {
-		if (msg.content.startsWith('!choose ')) {
+		if (msg.content.startsWith('!choose ') || msg.content.startsWith('!choice ')) {
 			const channel = msg.channel;
 			const choices = msg.content.substring(8).split(';').map(choice => choice.trim()).filter(choice => choice);
 			if (choices.length > 1) {
