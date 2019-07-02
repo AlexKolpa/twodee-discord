@@ -28,6 +28,10 @@ function newerThan(seconds, time) {
 	return time > Date.now() - seconds * 1000;
 }
 
+function escapeMarkdown(text) {
+	return text.replace(/([^\\]|^|\*|_|`|~)(\*|_|`|~)/g, '$1\\$2');
+}
+
 export default async function reddit(discord) {
 	log.info('setting up reddit plugin');
 
@@ -122,11 +126,11 @@ export default async function reddit(discord) {
 					if (recentUrls.length > 100) { recentUrls.shift(); }
 					const message = new RichEmbed();
 					const title = `[${submission.subreddit.display_name}] [${submission.author.name}] ${submission.title}`;
-					message.title = limitLength(title, messageTitleMaxLength);
+					message.title = escapeMarkdown(limitLength(title, messageTitleMaxLength));
 					message.url = `https://reddit.com${submission.permalink}`;
 					message.color = subredditColors[submission.subreddit.display_name.toLowerCase()] || defaultBotColor;
 					if (submission.is_self) {
-						message.description = limitLength(submission.selftext, messageDescMaxLength);
+						message.description = escapeMarkdown(limitLength(submission.selftext, messageDescMaxLength));
 					} else if (isSupportedImageLink(submission.url)) {
 						message.image = { url: submission.url };
 					}
