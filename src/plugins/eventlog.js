@@ -81,6 +81,13 @@ function isPrivateOrOwnMessage(reaction, user) {
 
 export default async function eventlog(discord) {
 	log.info('starting eventlog plugin');
+
+	/*
+		As messageReactionAdd and messageReactionRemove events
+		trigger only for messages that have been cached, we are using the raw feed
+		which contains all events that happen to find the reaction events that happen on uncached messages.
+		These events are then emitted to be handled by messageReactionAdd and messageReactionRemove listeners.
+	*/
 	discord.on('raw', async (event) => {
 		try {
 			// eslint-disable-next-line no-prototype-builtins
