@@ -8,18 +8,34 @@ const log = logger('plugins:eventlog');
 const adapter = new FileSync(config.get('reactions.file'));
 const db = low(adapter);
 
+db.defaults({ reactions: [] })
+	.write();
+
 const events = {
 	MESSAGE_REACTION_ADD: 'messageReactionAdd',
 	MESSAGE_REACTION_REMOVE: 'messageReactionRemove',
 };
 
+function getTopReactions(count) {
+	return db.get('reactions')
+		.orderBy('count', 'desc')
+		.take(count)
+		.value();
+}
+
 function addReaction(name) {
 	try {
-		if (!db.has(name).value()) {
-			db.set(name, 1)
+		const reaction = db.get('reactions')
+			.find({ id: name })
+			.value();
+		if (!reaction) {
+			db.get('reactions')
+				.push({ id: name, count: 1 })
 				.write();
 		} else {
-			db.update(name, n => n + 1)
+			db.get('reactions')
+				.find({ id: name })
+				.assign({ count: reaction.count + 1 })
 				.write();
 		}
 	} catch (e) {
@@ -29,8 +45,13 @@ function addReaction(name) {
 
 function removeReaction(name) {
 	try {
-		if (db.has(name).value()) {
-			db.update(name, n => (n > 0 ? n - 1 : 0))
+		const reaction = db.get('reactions')
+			.find({ id: name })
+			.value();
+		if (reaction) {
+			db.get('reactions')
+				.find({ id: name })
+				.assign({ count: reaction.count > 0 ? reaction.count - 1 : 0 })
 				.write();
 		}
 	} catch (e) {
@@ -38,13 +59,18 @@ function removeReaction(name) {
 	}
 }
 
-function getReactionCount(name) {
+function getReaction(name) {
 	try {
 		if (name.startsWith('<')) {
-			return db.get(name.substring(2, name.length - 1)).value();
-		} return db.get(name).value();
+			return db.get('reactions')
+				.find({ id: name.substring(2, name.length - 1) })
+				.value();
+		}
+		return db.get('reactions')
+			.find({ id: name })
+			.value();
 	} catch (e) {
-		log.error(`Error getting a reaction count for reaction ${name}`, e);
+		log.error(`Error getting reaction ${name}`, e);
 		return null;
 	}
 }
@@ -89,17 +115,31 @@ export default async function eventlog(discord) {
 	});
 
 	discord.on('message', (message) => {
-		if (message.content.startsWith('!reactions ')) {
+		if (message.content.startsWith('!topreactions')) {
+			const topReactions = getTopReactions(10);
 			const embed = new Discord.RichEmbed();
-			const reaction = message.content.substring(11).split().pop();
-			const count = getReactionCount(reaction);
+			let description = 'Most used reactions:\n\n';
+			for (let i = 0; i < topReactions.length; i += 1) {
+				const reaction = topReactions[i].id.includes(':') ? `<:${topReactions[i].id}>` : topReactions[i].id;
+				description += topReactions[i].count > 1 ? `${reaction} has been used ${topReactions[i].count} times.\n`
+					: `${reaction} has been used once.\n`;
+			}
+			if (topReactions.length === 0) {
+				description = 'No one has used any reactions yet :pensive:.';
+			}
+			embed.setDescription(description);
+			message.channel.send(embed);
+		} else if (message.content.startsWith('!reactions ')) {
+			const embed = new Discord.RichEmbed();
+			const reactionName = message.content.substring(11).split().pop();
+			const reaction = getReaction(reactionName);
 			let description;
-			if (!count) {
+			if (!reaction || !reaction.count) {
 				description = `The reaction has never been used, or it is not a valid reaction. 
 				The syntax for the command is "**!reactions :bird:**".`;
 			} else {
-				description = count > 1 ? `Reaction ${reaction} has been used ${count} times.`
-					: `Reaction ${reaction} has been used once.`;
+				description = reaction.count > 1 ? `Reaction ${reactionName} has been used ${reaction.count} times.`
+					: `Reaction ${reactionName} has been used once.`;
 			}
 			embed.description = description;
 			message.channel.send(embed);
