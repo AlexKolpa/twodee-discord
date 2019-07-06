@@ -75,6 +75,9 @@ function getReaction(name) {
 	}
 }
 
+function isPrivateOrOwnMessage(reaction, user) {
+	return reaction.message.author.id === user.id || reaction.message.channel.type === 'dm';
+}
 
 export default async function eventlog(discord) {
 	log.info('starting eventlog plugin');
@@ -105,13 +108,17 @@ export default async function eventlog(discord) {
 	});
 
 	discord.on('messageReactionAdd', (reaction, user) => {
-		log.info(`${user.username} reacted with "${reaction.emoji.name}".`);
-		addReaction((reaction.emoji.id) ? `${reaction.emoji.name}:${reaction.emoji.id}` : reaction.emoji.name);
+		if (!isPrivateOrOwnMessage(reaction, user)) {
+			log.info(`${user.username} reacted with "${reaction.emoji.name}".`);
+			addReaction((reaction.emoji.id) ? `${reaction.emoji.name}:${reaction.emoji.id}` : reaction.emoji.name);
+		}
 	});
 
 	discord.on('messageReactionRemove', (reaction, user) => {
-		log.info(`${user.username} removed their "${reaction.emoji.name}" reaction.`);
-		removeReaction((reaction.emoji.id) ? `${reaction.emoji.name}:${reaction.emoji.id}` : reaction.emoji.name);
+		if (!isPrivateOrOwnMessage(reaction, user)) {
+			log.info(`${user.username} removed their "${reaction.emoji.name}" reaction.`);
+			removeReaction((reaction.emoji.id) ? `${reaction.emoji.name}:${reaction.emoji.id}` : reaction.emoji.name);
+		}
 	});
 
 	discord.on('message', (message) => {
