@@ -10,6 +10,7 @@ import emotes from './plugins/emotes';
 import kyuu from './plugins/kyuu';
 import animeinfo from './plugins/animeinfo';
 import youtube from './plugins/youtube';
+import eventlog from './plugins/eventlog';
 
 const log = logger('bot:main');
 
@@ -31,6 +32,7 @@ async function init() {
 			kyuu(client),
 			animeinfo(client),
 			youtube(client),
+			eventlog(client),
 		]);
 	} catch (e) {
 		log.error(`Unexpected exception setting up plugins ${e}`);
