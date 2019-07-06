@@ -1,10 +1,11 @@
 import low from 'lowdb';
 import FileSync from 'lowdb/adapters/FileSync';
 import Discord from 'discord.js';
+import config from 'config';
 import logger from '../logger';
 
 const log = logger('plugins:eventlog');
-const adapter = new FileSync('db.json');
+const adapter = new FileSync(config.get('reactions.file'));
 const db = low(adapter);
 
 const events = {
