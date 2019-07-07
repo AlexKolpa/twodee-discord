@@ -75,6 +75,13 @@ function getReaction(name) {
 	}
 }
 
+/*
+	Returns true if the bot has access to the given emoji and can use it in a message.
+*/
+function isSupportedEmoji(emojiId, discord) {
+	return !emojiId.includes(':') || discord.emojis.has(emojiId.split(':').pop());
+}
+
 function isPrivateOrOwnMessage(reaction, user) {
 	return reaction.message.author.id === user.id || reaction.message.channel.type === 'dm';
 }
@@ -134,7 +141,14 @@ export default async function eventlog(discord) {
 			const embed = new Discord.RichEmbed();
 			let description = 'Most used reactions:\n\n';
 			for (let i = 0; i < topReactions.length; i += 1) {
-				const reaction = topReactions[i].id.includes(':') ? `<:${topReactions[i].id}>` : topReactions[i].id;
+				let reaction;
+				if (topReactions[i].id.includes(':')) {
+					reaction = isSupportedEmoji(topReactions[i].id, discord)
+						? `<:${topReactions[i].id}>`
+						: topReactions[i].id.split(':').shift();
+				} else {
+					reaction = topReactions[i].id;
+				}
 				description += topReactions[i].count > 1 ? `${reaction} has been used ${topReactions[i].count} times.\n`
 					: `${reaction} has been used once.\n`;
 			}
@@ -145,13 +159,17 @@ export default async function eventlog(discord) {
 			message.channel.send(embed);
 		} else if (message.content.startsWith('!reactions ')) {
 			const embed = new Discord.RichEmbed();
-			const reactionName = message.content.substring(11).split().pop();
+			let reactionName = message.content.substring(11).split().pop();
 			const reaction = getReaction(reactionName);
+
 			let description;
 			if (!reaction || !reaction.count) {
 				description = `The reaction has never been used, or it is not a valid reaction. 
 				The syntax for the command is "**!reactions :bird:**".`;
 			} else {
+				if (!isSupportedEmoji(reaction.id, discord)) {
+					reactionName = reaction.id.split(':').shift();
+				}
 				description = reaction.count > 1 ? `Reaction ${reactionName} has been used ${reaction.count} times.`
 					: `Reaction ${reactionName} has been used once.`;
 			}
