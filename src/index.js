@@ -11,6 +11,7 @@ import kyuu from './plugins/kyuu';
 import animeinfo from './plugins/animeinfo';
 import youtube from './plugins/youtube';
 import eventlog from './plugins/eventlog';
+import danbooru from './plugins/danbooru';
 
 const log = logger('bot:main');
 
@@ -33,6 +34,7 @@ async function init() {
 			animeinfo(client),
 			youtube(client),
 			eventlog(client),
+			danbooru(client),
 		]);
 	} catch (e) {
 		log.error(`Unexpected exception setting up plugins ${e}`);
