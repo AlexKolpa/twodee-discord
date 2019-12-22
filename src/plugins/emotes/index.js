@@ -60,10 +60,11 @@ export default async function emotes(discord) {
 				}
 				return undefined;
 			}
-
-			return new RichEmbed({
-				description: [...new Set(emotesList.map(emote => emote.trigger))].map(x => `!${x}`).join('\n'),
-			});
+			const maxLength = Math.max(...emotesList.map(e => e.trigger.length)) + 1;
+			return `\`\`\`Usage: !command, e.g. !hug.\n${[...new Set(emotesList.map(emote => emote.trigger))]
+				.map(x => `${x}`.padEnd(maxLength, '\xa0'))
+				.sort((a, b) => a.localeCompare(b))
+				.join(' ')}\`\`\``;
 		}
 
 		return new RichEmbed({
