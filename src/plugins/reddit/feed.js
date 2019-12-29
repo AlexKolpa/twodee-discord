@@ -1,7 +1,7 @@
-import Snoowrap from 'snoowrap';
 import { RichEmbed } from 'discord.js';
 import config from 'config';
-import logger from '../logger';
+import { fetchSubreddit, register } from './poller';
+import logger from '../../logger';
 
 const log = logger('plugins:reddit');
 
@@ -32,65 +32,33 @@ function escapeMarkdown(text) {
 	return text.replace(/([^\\]|^|\*|_|`|~)(\*|_|`|~)/g, '$1\\$2');
 }
 
-export default async function reddit(discord) {
-	log.info('setting up reddit plugin');
+export default async function redditFeed(discord) {
+	log.info('setting up reddit feed plugin');
 
-	const channelName = config.get('reddit.channel');
+	const channelName = config.get('feed.channel');
 	const redditChannel = discord.channels.find(channel => channel.name === channelName);
-	const subreddits = config.get('reddit.subreddits');
+	const subreddits = config.get('feed.subreddits');
 
-	const snoowrap = new Snoowrap({
-		userAgent: config.get('reddit.userAgent'),
-		clientId: config.get('reddit.clientId'),
-		clientSecret: config.get('reddit.clientSecret'),
-		refreshToken: config.get('reddit.refreshToken'),
-	});
-
-	const lastUpdate = {};
 	const subredditColors = {};
 
-	log.info('fetching latest posts');
+	log.info('fetching subreddit colors');
 
 	await Promise.all(subreddits.map(async (subreddit) => {
-		const subredditData = await snoowrap.getSubreddit(subreddit).fetch();
+		const subredditData = await fetchSubreddit(subreddit);
 		if (subredditData.banner_background_color) {
 			// Convert to number for discord
 			subredditColors[subreddit] = parseInt(subredditData.banner_background_color.substring(1), 16);
 		}
-		const submissions = snoowrap.getSubreddit(subreddit).getNew();
-		lastUpdate[subreddit] = await submissions[0].created_utc;
 	}));
 
 	const submissionsToPost = [];
+	const listener = (submission) => {
+		log.info(`Scheduling ${submission.id} for submission to feed`);
+		submissionsToPost.push(submission);
+	};
 
-	log.info(`setting up polling for ${subreddits}`);
-
-	const pollInterval = setInterval(async () => {
-		log.info('Polling subreddits');
-		await Promise.all(subreddits.map(async (subreddit) => {
-			const submissions = await snoowrap.getSubreddit(subreddit).getNew();
-			const subredditLastUpdate = lastUpdate[subreddit];
-			let newLastUpdate = subredditLastUpdate;
-			submissions.forEach((submission) => {
-				if (submission.created_utc <= subredditLastUpdate) {
-					return;
-				}
-
-				if (submission.created_utc > newLastUpdate) {
-					newLastUpdate = submission.created_utc;
-				}
-
-				if (submission.removed || submission.author.name === '[deleted]') {
-					return;
-				}
-
-				log.info(`Scheduling ${submission.id} for submitting to Discord`);
-				submissionsToPost.push(submission);
-			});
-
-			lastUpdate[subreddit] = newLastUpdate;
-		}));
-	}, 30 * 1000);
+	log.info(`Registering the following subreddits for polling: ${subreddits.join(', ')}`);
+	subreddits.forEach(subreddit => register(subreddit, listener));
 
 	log.info('setting up Discord submission queue drainer');
 
@@ -143,7 +111,6 @@ export default async function reddit(discord) {
 	}, 1000);
 
 	return () => {
-		clearInterval(pollInterval);
 		clearInterval(drainInterval);
 	};
 }
