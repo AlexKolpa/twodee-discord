@@ -13,6 +13,7 @@ import youtube from './plugins/youtube';
 import eventlog from './plugins/eventlog';
 import danbooru from './plugins/danbooru';
 import * as redditPoller from './plugins/reddit/poller';
+import reposts from './plugins/reddit/reposts';
 
 const log = logger('bot:main');
 
@@ -26,6 +27,7 @@ async function init() {
 	try {
 		stops = await Promise.all([
 			redditFeed(client),
+			reposts(client),
 			news(client),
 			countdown(client),
 			choose(client),
