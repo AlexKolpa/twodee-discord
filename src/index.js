@@ -1,6 +1,6 @@
 import Discord from 'discord.js';
 import config from 'config';
-import reddit from './plugins/reddit';
+import redditFeed from './plugins/reddit/feed';
 import news from './plugins/news';
 import logger from './logger';
 import countdown from './plugins/countdown';
@@ -12,6 +12,8 @@ import animeinfo from './plugins/animeinfo';
 import youtube from './plugins/youtube';
 import eventlog from './plugins/eventlog';
 import danbooru from './plugins/danbooru';
+import * as redditPoller from './plugins/reddit/poller';
+import reposts from './plugins/reddit/reposts';
 
 const log = logger('bot:main');
 
@@ -24,7 +26,8 @@ async function init() {
 	let stops;
 	try {
 		stops = await Promise.all([
-			reddit(client),
+			redditFeed(client),
+			reposts(client),
 			news(client),
 			countdown(client),
 			choose(client),
@@ -50,6 +53,7 @@ async function init() {
 	Object.keys(signals).forEach((signal) => {
 		process.on(signal, async () => {
 			log.info('shutting down');
+			redditPoller.stop();
 			await Promise.all(stops.map(async (stop) => {
 				try {
 					if (stop) {
