@@ -40,7 +40,7 @@ async function init() {
 			danbooru(client),
 		]);
 	} catch (e) {
-		log.error(`Unexpected exception setting up plugins ${e}`);
+		log.error('Unexpected exception setting up plugins', e);
 		process.exit(1);
 	}
 
