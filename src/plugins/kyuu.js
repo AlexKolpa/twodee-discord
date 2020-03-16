@@ -34,7 +34,7 @@ async function postRandomKyuu(channel) {
 	try {
 		const result = await request('https://helveticascans.com/r/series/wonder-cat-kyuu-chan/');
 		let kyuuLinks = (result.body.toString().match(/title"><a href="(.*?)" title="Chapter /g));
-		kyuuLinks = kyuuLinks.map(link => link.replace('title"><a href="', '').replace('" title="Chapter ', ''));
+		kyuuLinks = kyuuLinks.map((link) => link.replace('title"><a href="', '').replace('" title="Chapter ', ''));
 		const kyuuLink = kyuuLinks ? kyuuLinks[Math.round(Math.random() * (kyuuLinks.length - 1))] : null;
 		if (kyuuLink) {
 			await postKyuu(kyuuLink, channel);

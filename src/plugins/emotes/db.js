@@ -25,6 +25,7 @@ async function writeEmotes(content) {
 	await writeFile(emotesFile, fileContent, 'utf8');
 }
 
+// eslint-disable-next-line no-async-promise-executor
 const emotes = new Promise(async (resolve) => {
 	let emotesContent;
 
@@ -39,7 +40,7 @@ const emotes = new Promise(async (resolve) => {
 	if (fileContent) {
 		emotesContent = JSON.parse(fileContent);
 		// Freeze objects to prevent changes being made outside this module
-		emotesContent.list.forEach(emote => Object.freeze(emote));
+		emotesContent.list.forEach((emote) => Object.freeze(emote));
 	}
 
 	let triggers = buildTriggers(emotesContent.list);
@@ -66,7 +67,7 @@ const emotes = new Promise(async (resolve) => {
 			return emote;
 		},
 		async delete(id) {
-			const index = emotesContent.list.findIndex(emote => emote.id === id);
+			const index = emotesContent.list.findIndex((emote) => emote.id === id);
 			if (index === -1) {
 				return undefined;
 			}
@@ -86,7 +87,7 @@ const emotes = new Promise(async (resolve) => {
 
 			const id = Number(message);
 			if (id) {
-				const emote = commandTriggers.find(e => e.id === id);
+				const emote = commandTriggers.find((e) => e.id === id);
 				if (emote) {
 					return emote.message;
 				}

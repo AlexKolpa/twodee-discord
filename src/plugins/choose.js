@@ -10,7 +10,7 @@ export default async function choose(discord) {
 	discord.on('message', (msg) => {
 		if (msg.content.startsWith('!choose ') || msg.content.startsWith('!choice ')) {
 			const channel = msg.channel;
-			const choices = msg.content.substring(8).split(';').map(choice => choice.trim()).filter(choice => choice);
+			const choices = msg.content.substring(8).split(';').map((choice) => choice.trim()).filter((choice) => choice);
 			if (choices.length > 1) {
 				const message = new RichEmbed();
 				message.description = `

@@ -36,7 +36,7 @@ export default async function redditFeed(discord) {
 	log.info('setting up reddit feed plugin');
 
 	const channelName = config.get('feed.channel');
-	const redditChannel = discord.channels.find(channel => channel.name === channelName);
+	const redditChannel = discord.channels.find((channel) => channel.name === channelName);
 	const subreddits = config.get('feed.subreddits');
 
 	const subredditColors = {};
@@ -58,7 +58,7 @@ export default async function redditFeed(discord) {
 	};
 
 	log.info(`Registering the following subreddits for polling: ${subreddits.join(', ')}`);
-	subreddits.forEach(subreddit => register(subreddit, listener));
+	subreddits.forEach((subreddit) => register(subreddit, listener));
 
 	log.info('setting up Discord submission queue drainer');
 
@@ -68,7 +68,7 @@ export default async function redditFeed(discord) {
 			let newPosts = [];
 			let nextIndex;
 			do {
-				nextIndex = submissionsToPost.findIndex(sub => sub.created_utc <= (time - minPostTimeSec));
+				nextIndex = submissionsToPost.findIndex((sub) => sub.created_utc <= (time - minPostTimeSec));
 
 				if (nextIndex !== -1) {
 					newPosts.push(...submissionsToPost.splice(nextIndex, 1));
@@ -80,14 +80,14 @@ export default async function redditFeed(discord) {
 			}
 
 			// Fetch posts again as they might be outdated
-			const submissions = await Promise.all(newPosts.map(post => post.fetch()));
+			const submissions = await Promise.all(newPosts.map((post) => post.fetch()));
 			// Ensure the posts haven't been removed or deleted in the mean time
-			newPosts = submissions.filter(submission => !submission.removed && submission.author.name !== '[deleted]');
+			newPosts = submissions.filter((submission) => !submission.removed && submission.author.name !== '[deleted]');
 
 			log.info(`posting ${newPosts.length} submission(s) to Discord`);
 
 			newPosts.forEach((submission) => {
-				if (recentUrls.some(item => item.url && item.url === submission.url && newerThan(minUrlAgeSec, item.time))) {
+				if (recentUrls.some((item) => item.url && item.url === submission.url && newerThan(minUrlAgeSec, item.time))) {
 					log.info(`Url ${submission.url} was already recently posted, skipping.`);
 				} else {
 					recentUrls.push({ url: submission.url, time: new Date().getTime() });

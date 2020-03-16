@@ -145,7 +145,7 @@ function admin(command, ...args) {
 export default async function danbooru(discord) {
 	discord.on('message', async (msg) => {
 		if (msg.content.startsWith('!dba')) {
-			if (!editRoles.some(role => msg.member.roles.has(role))) {
+			if (!editRoles.some((role) => msg.member.roles.has(role))) {
 				msg.channel.send(new RichEmbed({
 					description: 'You don\'t have the correct permissions to edit commands!',
 				}));
@@ -186,7 +186,7 @@ export default async function danbooru(discord) {
 
 			const blacklisted = db.get('blacklist').value();
 			// Ban blacklisted tags from user search
-			const blacklistedTag = extraTags.find(tag => blacklisted.includes(tag));
+			const blacklistedTag = extraTags.find((tag) => blacklisted.includes(tag));
 			if (blacklistedTag) {
 				msg.channel.send(new RichEmbed({
 					description: `Use of tag '${blacklistedTag}' is not allowed!`,
@@ -203,7 +203,7 @@ export default async function danbooru(discord) {
 			}
 
 			// Additionally explicitly strip blacklisted tags from request
-			const tags = [...queryTags, ...blacklisted.map(tag => `-${tag}`)];
+			const tags = [...queryTags, ...blacklisted.map((tag) => `-${tag}`)];
 			// There's a max number of tags we can send to danbooru
 			if (tags.length > 12) {
 				msg.channel.send(new RichEmbed({
