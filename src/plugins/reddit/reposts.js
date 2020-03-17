@@ -14,12 +14,12 @@ export default async function reposts(discord) {
 	log.info('setting up reddit reposts plugin');
 
 	const channelName = config.get('reposts.channel');
-	const repostChannel = discord.channels.find((channel) => channel.name === channelName);
+	const repostChannel = discord.channels.find(channel => channel.name === channelName);
 	const repostRules = config.get('reposts.rules');
 	const sources = Object.keys(repostRules);
 
 	const sourcesObj = config.get('reposts.sources');
-	const sourceIds = Object.keys(repostRules).map((sub) => sourcesObj[sub]);
+	const sourceIds = Object.keys(repostRules).map(sub => sourcesObj[sub]);
 
 	async function repostChecker(submission) {
 		const subreddit = submission.subreddit.display_name.toLowerCase();
@@ -75,5 +75,5 @@ export default async function reposts(discord) {
 	}
 
 	log.info(`Registering the following subreddits for polling: ${sources.join(', ')}`);
-	sources.forEach((subreddit) => register(subreddit, repostChecker));
+	sources.forEach(subreddit => register(subreddit, repostChecker));
 }

@@ -44,7 +44,7 @@ export default async function emotes(discord) {
 			const message = msg.content.split(' ');
 			const sendAll = message.length > 1 && message[1] === 'all';
 			if (sendAll) {
-				if (!editRoles.some((role) => msg.member.roles.has(role))) {
+				if (!editRoles.some(role => msg.member.roles.has(role))) {
 					return new RichEmbed({
 						description: 'You don\'t have the correct permissions to list all emotes!',
 					});
@@ -60,9 +60,9 @@ export default async function emotes(discord) {
 				}
 				return undefined;
 			}
-			const maxLength = Math.max(...emotesList.map((e) => e.trigger.length)) + 1;
-			return `\`\`\`Usage: !command, e.g. !hug.\n${[...new Set(emotesList.map((emote) => emote.trigger))]
-				.map((x) => `${x}`.padEnd(maxLength, '\xa0'))
+			const maxLength = Math.max(...emotesList.map(e => e.trigger.length)) + 1;
+			return `\`\`\`Usage: !command, e.g. !hug.\n${[...new Set(emotesList.map(emote => emote.trigger))]
+				.map(x => `${x}`.padEnd(maxLength, '\xa0'))
 				.sort((a, b) => a.localeCompare(b))
 				.join(' ')}\`\`\``;
 		}
@@ -73,7 +73,7 @@ export default async function emotes(discord) {
 	}
 
 	async function addEmote(msg) {
-		if (!editRoles.some((role) => msg.member.roles.has(role))) {
+		if (!editRoles.some(role => msg.member.roles.has(role))) {
 			return new RichEmbed({
 				description: 'You don\'t have the correct permissions to add emotes!',
 			});
@@ -99,7 +99,7 @@ export default async function emotes(discord) {
 
 		let response = message.slice(2).join(' ');
 		// Check whether the command is embed by checking if it contains any of the key definitions
-		const embed = allowedKeys.some((key) => response.startsWith(`${key}:`));
+		const embed = allowedKeys.some(key => response.startsWith(`${key}:`));
 		if (embed) {
 			try {
 				log.info(`parsing message object ${response}`);
@@ -116,7 +116,7 @@ export default async function emotes(discord) {
 					description: 'Unable to parse emote message',
 				});
 			}
-			const invalidKeys = Object.keys(response).some((key) => !allowedKeys.includes(key));
+			const invalidKeys = Object.keys(response).some(key => !allowedKeys.includes(key));
 			if (invalidKeys) {
 				return new RichEmbed({
 					description: 'Unsupported keys found in emote message.',
@@ -147,7 +147,7 @@ export default async function emotes(discord) {
 	}
 
 	async function deleteEmote(msg) {
-		if (!editRoles.some((role) => msg.member.roles.has(role))) {
+		if (!editRoles.some(role => msg.member.roles.has(role))) {
 			return new RichEmbed({
 				description: 'You don\'t have the correct permissions to delete emotes!',
 			});

@@ -48,7 +48,7 @@ function getAiringAt(anime) {
 function getReleasingDescription(anime) {
 	const aniListLink = getAnilistLink(anime, getTitle(anime));
 	let description = '';
-	const prevEp = anime.airingSchedule.edges.filter((n) => n.node.timeUntilAiring < 0).pop();
+	const prevEp = anime.airingSchedule.edges.filter(n => n.node.timeUntilAiring < 0).pop();
 	if (prevEp && prevEp.node.timeUntilAiring < 0 && prevEp.node.timeUntilAiring + maxHoursPast * 3600 > 0) {
 		return `Episode ${prevEp.node.episode} of ${aniListLink}
 		aired ${moment().add(prevEp.node.timeUntilAiring, 'seconds').fromNow()}.`;
@@ -232,7 +232,7 @@ async function getUpcomingAnime(hoursUntilAiring) {
 	};
 
 	const data = await queryAnilist(query, variables);
-	const mediaIds = data.data.Page.airingSchedules.map((x) => x.mediaId);
+	const mediaIds = data.data.Page.airingSchedules.map(x => x.mediaId);
 	return getAnimeByMediaIds(mediaIds);
 }
 
@@ -300,12 +300,10 @@ export default async function when(discord) {
 			const query = msg.content.substr(6);
 			const data = await findAnime(query);
 			const q = query.toLowerCase();
-			data.data.Page.media = data.data.Page.media.filter(
-				(media) => media.synonyms.some((s) => s.toLowerCase().includes(q))
-					|| (media.title.romaji && media.title.romaji.toLowerCase().includes(q))
-					|| (media.title.native && media.title.native.toLowerCase().includes(q))
-					|| (media.title.english && media.title.english.toLowerCase().includes(q)),
-			);
+			data.data.Page.media = data.data.Page.media.filter(media => media.synonyms.some(s => s.toLowerCase().includes(q))
+				|| (media.title.romaji && media.title.romaji.toLowerCase().includes(q))
+				|| (media.title.native && media.title.native.toLowerCase().includes(q))
+				|| (media.title.english && media.title.english.toLowerCase().includes(q)));
 			const message = getSearchResultMessage(data);
 			msg.channel.send(message);
 		} else if (msg.content.startsWith('!today')) {

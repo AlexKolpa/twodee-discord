@@ -53,7 +53,7 @@ function isNewerThan(timestamp) {
 export default async function news(discord) {
 	log.info('starting news plugin');
 	const channelName = config.get('news.channel');
-	const discordChannel = discord.channels.find((channel) => channel.name === channelName);
+	const discordChannel = discord.channels.find(channel => channel.name === channelName);
 	const channel = config.get('news.url');
 
 	log.info(`fetching from the following channel: ${channel}`);
