@@ -213,9 +213,6 @@
 	"window": [
 		"https://i.imgur.com/iTao6Ld.png"
 	],
-	"bang2": [
-		"https://i.imgur.com/NkeWZk7.png"
-	],
 	"peek": [
 		"https://i.imgur.com/Eml92R5.png",
 		"https://i.imgur.com/fvcy1xJ.png",
@@ -349,7 +346,7 @@
 	"ganbare": [
 		"https://i.imgur.com/1dd5hWt.png"
 	],
-	"ok2": [
+	"ok": [
 		"https://i.imgur.com/WmsBz9I.png",
 		"https://i.imgur.com/Y4ZnaT7.png"
 	],
@@ -445,7 +442,8 @@
 		"https://i.imgur.com/zuko1ZL.png"
 	],
 	"bang": [
-		"https://i.imgur.com/6wxdn9p.png"
+		"https://i.imgur.com/6wxdn9p.png",
+		"https://i.imgur.com/NkeWZk7.png"
 	],
 	"plop": [
 		"https://i.imgur.com/uF4MEWE.png"
