@@ -2,18 +2,8 @@ import { RichEmbed } from 'discord.js';
 import config from 'config';
 import logger from '../logger';
 
-const data = config.get('menhera');
+const emotes = config.get('menhera');
 const log = logger('plugins:menhera');
-
-function objToStrMap(obj) {
-	const strMap = new Map();
-	Object.keys(obj).forEach((k) => {
-		strMap.set(k, obj[k]);
-	});
-	return strMap;
-}
-
-const emotes = objToStrMap(data);
 
 function processMenheraComment(msg) {
 	const split = msg.content.split(' ');
@@ -21,19 +11,20 @@ function processMenheraComment(msg) {
 	if (split.length !== 1) {
 		let list;
 		if (split[1] === 'random') {
-			list = emotes.get([...emotes.keys()][Math.floor(Math.random() * emotes.size)]);
+			list = emotes.get([...Object.keys(emotes)][Math.floor(Math.random() * Object.keys(emotes).length)]);
 		} else {
-			list = emotes.get(split[1]);
-			if (!list) {
+			if (!emotes.hasOwnProperty(split[1])) {
 				message.description = `No reaction found: ${split[1]}. See !mh or !menhera for available emotes.`;
 				msg.channel.send(message);
 				return;
 			}
+			list = emotes.get(split[1]);
 		}
 		message.image = { url: list[Math.floor(Math.random() * list.length)] };
 		msg.channel.send(message);
+		return;
 	}
-	const keys = Array.from(emotes.keys());
+	const keys = Object.keys(emotes);
 	keys.sort();
 	keys.push('random');
 	message.description = `Usage: !mh/!menhera *emote*. 
@@ -42,7 +33,7 @@ function processMenheraComment(msg) {
 }
 
 export default async function menhera(discord) {
-	log.info(`starting menhera plugin. ${emotes.size} emotes loaded.`);
+	log.info(`starting menhera plugin. ${Object.keys(emotes).length} emotes loaded.`);
 	discord.on('message', (msg) => {
 		if (msg.content.startsWith('!menhera') || msg.content.startsWith('!mh')) {
 			processMenheraComment(msg);
