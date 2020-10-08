@@ -8,7 +8,6 @@ const log = logger('plugins:animeinfo');
 const request = promisify(req);
 const maxSeachResults = 5;
 const maxUpcomingResults = 20;
-const maxHoursUntilAiring = 24;
 const maxHoursPast = 48;
 
 function getTitle(anime) {
@@ -131,8 +130,8 @@ function getMessage(data, description, maxResults) {
 	return message;
 }
 
-function getUpcomingMessage(data) {
-	const description = `The following anime will air in the next ${maxHoursUntilAiring} hours:\n`;
+function getUpcomingMessage(data, start, end) {
+	const description = `The following anime will air in the next ${(start !== 0 ? `${start}-` : ' ')}${end} hours:\n`;
 	return getMessage(data, description, maxUpcomingResults);
 }
 
@@ -219,7 +218,7 @@ async function getAnimeByMediaIds(mediaIds) {
 	return queryAnilist(query, variables);
 }
 
-async function getUpcomingAnime(hoursUntilAiring) {
+async function getUpcomingAnime(minHoursUntiLAir, maxHoursUntilAir) {
 	const query = `
 	query ($airingAt_lesser: Int, $airingAt_greater: Int) {
 		Page (page: 1, perPage: 100) {
@@ -230,8 +229,8 @@ async function getUpcomingAnime(hoursUntilAiring) {
 	}`;
 	const now = Math.floor(Date.now() / 1000);
 	const variables = {
-		airingAt_lesser: now + 3600 * hoursUntilAiring,
-		airingAt_greater: now,
+		airingAt_lesser: now + 3600 * maxHoursUntilAir,
+		airingAt_greater: now + 3600 * minHoursUntiLAir,
 	};
 
 	const data = await queryAnilist(query, variables);
@@ -309,8 +308,10 @@ export default async function when(discord) {
 				|| (media.title.english && media.title.english.toLowerCase().includes(q)));
 			const message = getSearchResultMessage(data);
 			msg.channel.send(message);
-		} else if (msg.content.startsWith('!today')) {
-			const data = await getUpcomingAnime(maxHoursUntilAiring);
+		} else if (msg.content.startsWith('!today') || msg.content.startsWith('!tomorrow')) {
+			const start = msg.content.startsWith('!today') ? 0 : 24;
+			const end = msg.content.startsWith('!today') ? 24 : 48;
+			const data = await getUpcomingAnime(start, end);
 			data.data.Page.media.sort((a, b) => {
 				if (a.nextAiringEpisode && !b.nextAiringEpisode) {
 					return -1;
@@ -319,7 +320,7 @@ export default async function when(discord) {
 				}
 				return a.nextAiringEpisode.timeUntilAiring < b.nextAiringEpisode.timeUntilAiring ? -1 : 1;
 			});
-			const message = getUpcomingMessage(data);
+			const message = getUpcomingMessage(data, start, end);
 			msg.channel.send(message);
 		}
 	});
