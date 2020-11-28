@@ -209,6 +209,12 @@
       },
     },
   },
+  danbooru: {
+    file: './danbooru.json',
+    login: '',
+    apiKey: '',
+    editRoles: ['473766183447822336'],
+  },
   "menhera": {
     "embarrassed": [
       "https://i.imgur.com/FkkQ1kU.png",
