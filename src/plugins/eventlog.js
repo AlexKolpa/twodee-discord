@@ -102,8 +102,8 @@ export default async function eventlog(discord) {
 				return;
 			}
 			const { d: data } = event;
-			const user = await discord.users.fetch(data.user_id);
-			const channel = (await discord.channels.fetch(data.channel_id)) || (await user.createDM());
+			const user = await discord.fetchUser(data.user_id);
+			const channel = discord.channels.get(data.channel_id) || (await user.createDM());
 
 			if (channel.messages.has(data.message_id)) return;
 
