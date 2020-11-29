@@ -102,13 +102,12 @@ export default async function eventlog(discord) {
 				return;
 			}
 			const { d: data } = event;
-			const user = discord.users.get(data.user_id);
-			const channel = discord.channels.get(data.channel_id) || await user.createDM();
+			const user = await discord.users.fetch(data.user_id);
+			const channel = (await discord.channels.fetch(data.channel_id)) || (await user.createDM());
 
 			if (channel.messages.has(data.message_id)) return;
 
 			const message = await channel.fetchMessage(data.message_id);
-			log.info('Message', message);
 			log.info('User', user);
 			const emojiKey = (data.emoji.id) ? `${data.emoji.name}:${data.emoji.id}` : data.emoji.name;
 			let reaction = message.reactions.get(emojiKey);
