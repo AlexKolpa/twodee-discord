@@ -38,13 +38,14 @@ export default async function emotes(discord) {
 
 	const emotesDb = await emotesPromise;
 
-	function listEmotes(msg) {
+	async function listEmotes(msg) {
 		const emotesList = emotesDb.list();
 		if (emotesList.length > 0) {
 			const message = msg.content.split(' ');
 			const sendAll = message.length > 1 && message[1] === 'all';
 			if (sendAll) {
-				if (!editRoles.some(role => msg.member.roles.has(role))) {
+				const guildMember = await msg.guild.fetchMember(msg.author);
+				if (!editRoles.some(role => guildMember.roles.has(role))) {
 					return new RichEmbed({
 						description: 'You don\'t have the correct permissions to list all emotes!',
 					});
@@ -73,7 +74,8 @@ export default async function emotes(discord) {
 	}
 
 	async function addEmote(msg) {
-		if (!editRoles.some(role => msg.member.roles.has(role))) {
+		const guildMember = await msg.guild.fetchMember(msg.author);
+		if (!editRoles.some(role => guildMember.roles.has(role))) {
 			return new RichEmbed({
 				description: 'You don\'t have the correct permissions to add emotes!',
 			});
@@ -147,7 +149,8 @@ export default async function emotes(discord) {
 	}
 
 	async function deleteEmote(msg) {
-		if (!editRoles.some(role => msg.member.roles.has(role))) {
+		const guildMember = await msg.guild.fetchMember(msg.author);
+		if (!editRoles.some(role => guildMember.roles.has(role))) {
 			return new RichEmbed({
 				description: 'You don\'t have the correct permissions to delete emotes!',
 			});

@@ -145,7 +145,8 @@ function admin(command, ...args) {
 export default async function danbooru(discord) {
 	discord.on('message', async (msg) => {
 		if (msg.content.startsWith('!dba')) {
-			if (!editRoles.some(role => msg.member.roles.has(role))) {
+			const guildMember = await msg.guild.fetchMember(msg.author);
+			if (!editRoles.some(role => guildMember.roles.has(role))) {
 				msg.channel.send(new RichEmbed({
 					description: 'You don\'t have the correct permissions to edit commands!',
 				}));
