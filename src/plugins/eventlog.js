@@ -109,6 +109,7 @@ export default async function eventlog(discord) {
 
 			const message = await channel.fetchMessage(data.message_id);
 			log.info('Message', message);
+			log.info('User', user);
 			const emojiKey = (data.emoji.id) ? `${data.emoji.name}:${data.emoji.id}` : data.emoji.name;
 			let reaction = message.reactions.get(emojiKey);
 			if (!reaction) {
