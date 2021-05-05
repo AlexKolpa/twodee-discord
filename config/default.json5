@@ -215,6 +215,9 @@
     apiKey: '',
     editRoles: ['473766183447822336'],
   },
+    "pixiv": {
+	  "refreshToken": '',
+  },
   "menhera": {
     "embarrassed": [
       "https://i.imgur.com/FkkQ1kU.png",
