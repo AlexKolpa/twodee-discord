@@ -22,6 +22,7 @@
     "request": "^2.88.0",
     "rss-parser": "^3.4.3",
     "snoowrap": "^1.15.2",
+    "url-regex": "^5.0.0",
     "youtube-api-v3-search": "^1.2.1"
   },
   "devDependencies": {
