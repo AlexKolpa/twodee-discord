@@ -24,12 +24,13 @@ export default async function pixiv(discord) {
 	discord.on('message', async (msg) => {
 		const urls = msg.content.match(urlRegex());
 		if (client && urls && urls[0].startsWith('https://www.pixiv.net')) {
+			let filePath;
 			try {
 				const url = urls[0];
 				const pixivId = await client.util.parseID(url);
+				filePath = `./../illust/${pixivId}.png`;
 				const illust = await client.illust.get(url);
 				await client.util.downloadIllust(url, './illust', 'medium');
-				const filePath = `./../illust/${pixivId}.png`;
 				const attachment = new Attachment(filePath, 'preview.png');
 				const embed = new RichEmbed()
 					.setTitle(`${illust.title} by ${illust.user.name}`)
@@ -38,9 +39,10 @@ export default async function pixiv(discord) {
 					.setImage('attachment://preview.png');
 				await msg.channel.send(embed);
 				msg.suppressEmbeds(true);
-				await deleteFile(filePath);
 			} catch (e) {
 				log.error('Error replacing Pixiv preview', e);
+			} finally {
+				await deleteFile(filePath);
 			}
 		}
 	});
