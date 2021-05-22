@@ -38,7 +38,6 @@ export default async function pixiv(discord) {
 					.attachFile(attachment)
 					.setImage('attachment://preview.png');
 				await msg.channel.send(embed);
-				msg.suppressEmbeds(true);
 			} catch (e) {
 				log.error('Error replacing Pixiv preview', e);
 			} finally {
