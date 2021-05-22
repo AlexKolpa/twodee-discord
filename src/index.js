@@ -15,6 +15,7 @@ import danbooru from './plugins/danbooru';
 import * as redditPoller from './plugins/reddit/poller';
 import reposts from './plugins/reddit/reposts';
 import menhera from './plugins/menhera';
+import pixiv from './plugins/pixiv';
 
 const log = logger('bot:main');
 
@@ -40,6 +41,7 @@ async function init() {
 			eventlog(client),
 			danbooru(client),
 			menhera(client),
+			pixiv(client),
 		]);
 	} catch (e) {
 		log.error('Unexpected exception setting up plugins', e);

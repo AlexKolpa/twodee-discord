@@ -14,13 +14,15 @@
   "dependencies": {
     "config": "^2.0.1",
     "danbooru": "^3.1.0",
-    "discord.js": "^11.4.2",
+    "discord.js": "11.6.4",
     "lowdb": "^1.0.0",
     "moment": "^2.24.0",
     "open-graph": "^0.2.3",
+    "pixiv.ts": "^0.4.2",
     "request": "^2.88.0",
     "rss-parser": "^3.4.3",
     "snoowrap": "^1.15.2",
+    "url-regex": "^5.0.0",
     "youtube-api-v3-search": "^1.2.1"
   },
   "devDependencies": {
