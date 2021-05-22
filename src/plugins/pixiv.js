@@ -31,7 +31,9 @@ export default async function pixiv(discord) {
 				if (directUrl.startsWith(scheme)) {
 					directUrl = directUrl.substring(0, scheme.length);
 				}
+
 				const imageUrl = `${kotoriPixivApi}/image/${directUrl}`;
+				log.info(`showing preview ${imageUrl}`);
 
 				const embed = new RichEmbed({
 					title: `${illust.title} by ${illust.user.name}`,
