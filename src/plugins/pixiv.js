@@ -28,7 +28,7 @@ export default async function pixiv(discord) {
 			try {
 				const url = urls[0];
 				const pixivId = await client.util.parseID(url);
-				filePath = `./../illust/${pixivId}.png`;
+				filePath = `./illust/${pixivId}.png`;
 				const illust = await client.illust.get(url);
 				await client.util.downloadIllust(url, './illust', 'medium');
 				const attachment = new Attachment(filePath, 'preview.png');
