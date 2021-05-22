@@ -29,7 +29,7 @@ export default async function pixiv(discord) {
 				const illust = await client.illust.get(url);
 				let directUrl = illust.image_urls.large;
 				if (directUrl.startsWith(scheme)) {
-					directUrl = directUrl.substring(0, scheme.length);
+					directUrl = directUrl.slice(scheme.length);
 				}
 
 				const imageUrl = `${kotoriPixivApi}/image/${directUrl}`;
