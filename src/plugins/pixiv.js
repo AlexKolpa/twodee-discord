@@ -1,13 +1,11 @@
-import { Attachment, RichEmbed } from 'discord.js';
+import { RichEmbed } from 'discord.js';
 import Pixiv from 'pixiv.ts';
-import fs from 'fs';
-import { promisify } from 'util';
 import config from 'config';
 import logger from '../logger';
 
 const regex = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&//=]*)?/gi;
+const kotoriPixivApi = 'https://api.pixiv.moe';
 
-const deleteFile = promisify(fs.unlink);
 const log = logger('plugins:pixiv');
 let refreshToken = config.get('pixiv.refreshToken');
 let client;
@@ -25,24 +23,18 @@ export default async function pixiv(discord) {
 	discord.on('message', async (msg) => {
 		const urls = msg.content.match(regex);
 		if (client && urls && urls[0].startsWith('https://www.pixiv.net')) {
-			let filePath;
 			try {
 				const url = urls[0];
-				const pixivId = await client.util.parseID(url);
-				filePath = `./illust/${pixivId}.png`;
 				const illust = await client.illust.get(url);
-				await client.util.downloadIllust(url, './illust', 'medium');
-				const attachment = new Attachment(filePath, 'preview.png');
+				const imageUrl = `${kotoriPixivApi}/image/${illust.image_urls.large}`;
+
 				const embed = new RichEmbed()
 					.setTitle(`${illust.title} by ${illust.user.name}`)
 					.setURL(url)
-					.attachFile(attachment)
-					.setImage('attachment://preview.png');
+					.setImage({ url: imageUrl });
 				await msg.channel.send(embed);
 			} catch (e) {
 				log.error('Error replacing Pixiv preview', e);
-			} finally {
-				await deleteFile(filePath);
 			}
 		}
 	});
