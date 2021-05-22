@@ -5,7 +5,7 @@ import { promisify } from 'util';
 import config from 'config';
 import logger from '../logger';
 
-const regex = /[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&//=]*)?/gi;
+const regex = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&//=]*)?/gi;
 
 const deleteFile = promisify(fs.unlink);
 const log = logger('plugins:pixiv');
