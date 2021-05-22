@@ -3,8 +3,9 @@ import Pixiv from 'pixiv.ts';
 import fs from 'fs';
 import { promisify } from 'util';
 import config from 'config';
-import urlRegex from 'url-regex';
 import logger from '../logger';
+
+const regex = /[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&//=]*)?/gi;
 
 const deleteFile = promisify(fs.unlink);
 const log = logger('plugins:pixiv');
@@ -22,7 +23,7 @@ export default async function pixiv(discord) {
 	}
 
 	discord.on('message', async (msg) => {
-		const urls = msg.content.match(urlRegex());
+		const urls = msg.content.match(regex);
 		if (client && urls && urls[0].startsWith('https://www.pixiv.net')) {
 			let filePath;
 			try {
