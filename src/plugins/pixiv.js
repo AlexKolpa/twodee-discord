@@ -5,6 +5,7 @@ import logger from '../logger';
 
 const regex = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&//=]*)?/gi;
 const kotoriPixivApi = 'https://api.pixiv.moe';
+const scheme = 'https://';
 
 const log = logger('plugins:pixiv');
 let refreshToken = config.get('pixiv.refreshToken');
@@ -26,12 +27,19 @@ export default async function pixiv(discord) {
 			try {
 				const url = urls[0];
 				const illust = await client.illust.get(url);
-				const imageUrl = `${kotoriPixivApi}/image/${illust.image_urls.large}`;
+				let directUrl = illust.image_urls.large;
+				if (directUrl.startsWith(scheme)) {
+					directUrl = directUrl.substring(0, scheme.length);
+				}
+				const imageUrl = `${kotoriPixivApi}/image/${directUrl}`;
 
-				const embed = new RichEmbed()
-					.setTitle(`${illust.title} by ${illust.user.name}`)
-					.setURL(url)
-					.setImage({ url: imageUrl });
+				const embed = new RichEmbed({
+					title: `${illust.title} by ${illust.user.name}`,
+					url,
+					image: {
+						url: imageUrl,
+					},
+				});
 				await msg.channel.send(embed);
 			} catch (e) {
 				log.error('Error replacing Pixiv preview', e);
